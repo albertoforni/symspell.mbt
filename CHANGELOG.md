@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.3.0 — 2026-10-14
+
+- Add deterministic binary dictionary snapshots and independent restoration.
+- Preserve settings, exact Int64 counts, pending words, bigrams, and deletion buckets.
+- Restore the complete index without regenerating deletion strings.
+- Validate format versions, CRC32, table ordering, frequencies, and index completeness.
+- Define a portable format with UTF-8 terms and little-endian integers.
+- Add 25 independent Python byte fixtures, round trips, and malformed-input regressions.
+
 ## 0.2.0 — 2026-10-14
 
 - Add compound correction with word splitting, merging, and bigram scoring.

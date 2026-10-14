@@ -27,4 +27,10 @@ fn main {
       "\{query} => \{result.corrected_string} (penalty \{result.distance_sum})",
     )
   }
+  let snapshot = phrases.to_snapshot()
+  let restored = try! @symspell.SymSpell::from_snapshot(snapshot)
+  let correction = (try! restored.lookup_compound("whereiz"))[0]
+  println(
+    "Restored \{restored.word_count()} words from \{snapshot.length()} snapshot bytes: whereiz => \{correction.term}",
+  )
 }

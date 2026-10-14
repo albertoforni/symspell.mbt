@@ -15,7 +15,7 @@ pub(all) struct Suggestion {
 } derive(Eq, Debug)
 
 ///|
-/// Configuration and dictionary parsing errors.
+/// Configuration, dictionary parsing, and snapshot errors.
 pub(all) suberror SymSpellError {
   InvalidEditDistance(Int)
   InvalidPrefixLength(Int)
@@ -26,6 +26,8 @@ pub(all) suberror SymSpellError {
   InvalidFrequencyCount(Int64)
   InvalidBigramTerm(String)
   InvalidSegmentationWordLength(Int)
+  InvalidSnapshot(Int, String)
+  UnsupportedSnapshotVersion(UInt)
 } derive(Eq, Debug)
 
 ///|

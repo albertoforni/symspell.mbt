@@ -6,7 +6,7 @@ with cutoff-aware optimal string alignment distance and ranks them by frequency.
 
 The library depends only on `moonbitlang/core` and runs on native, JavaScript,
 WebAssembly, and WebAssembly GC. There are no C bindings or runtime dictionary
-downloads. The module name is `albertoforni/symspell`; version 0.2.0 is currently
+downloads. The module name is `albertoforni/symspell`; version 0.3.0 is currently
 a local project and has not been published to Mooncakes.
 
 ## Run the example
@@ -20,7 +20,8 @@ moon run cmd/main --target native
 The example corrects `memebers` to `members`, `cafe` to `café`, `東亰` to `東京`,
 and `😃` to `😀` using a small, embedded dictionary. It also demonstrates compound
 correction and segmentation, including `whereiz` → `where is`,
-`ste am machie` → `steam machine`, and `helloworld` → `hello world`. It runs with
+`ste am machie` → `steam machine`, and `helloworld` → `hello world`, then
+restores a dictionary from a binary snapshot. It runs with
 `--target js`, `--target wasm`, or `--target wasm-gc`.
 
 ## Basic usage
@@ -199,6 +200,54 @@ nonnegative. Unlike word-frequency additions, repeated bigram entries replace
 their count. Replacement and removal refresh the minimum-frequency cap used
 for unobserved pairs. `bigram_count()` returns the number of stored pairs.
 
+## Dictionary persistence
+
+`to_snapshot()` returns a `Bytes` value containing the dictionary settings,
+indexed and below-threshold word frequencies, bigram frequencies, and the
+precomputed deletion index. `SymSpell::from_snapshot(bytes)` restores a new,
+independent mutable dictionary. It loads the saved buckets directly; deletion
+strings are not generated again. Word, compound, and segmentation results are
+preserved, including frequency thresholds and corpus scoring.
+
+```mbt check
+///|
+test {
+  let dictionary = @symspell.SymSpell::new(count_threshold=3L)
+  let _ = dictionary.load_dictionary("hello 100\nworld 90\nrare 2")
+  let _ = dictionary.set_bigram_count("hello world", 50L)
+  let bytes = dictionary.to_snapshot()
+  // Save or transport these bytes using the application's I/O facilities.
+  let restored = @symspell.SymSpell::from_snapshot(bytes)
+  assert_eq(restored.lookup("helo"), dictionary.lookup("helo"))
+  assert_eq(
+    restored.word_segmentation("helloworld").corrected_string,
+    "hello world",
+  )
+  assert_eq(restored.bigram_frequency("hello world"), Some(50L))
+  assert_true(restored.create_dictionary_entry("rare", 1L))
+  assert_eq(restored.frequency("rare"), Some(3L))
+  assert_eq(dictionary.frequency("rare"), None)
+}
+```
+
+The format is deterministic across supported targets and insertion order, uses
+UTF-8 strings without character normalization, and stores frequencies exactly
+as signed 64-bit integers. The caller owns file access, storage, compression,
+or network transport. Both methods work on every library target.
+
+Restoration checks the magic, format version, CRC32, configuration, frequencies,
+table ordering, word references, and deletion-index membership and completeness.
+Truncated, corrupt, or inconsistent data raises
+`InvalidSnapshot(byte_offset, reason)`. An unknown version raises
+`UnsupportedSnapshotVersion(version)`. Offsets are zero-based positions in the
+snapshot bytes, independent of the Unicode character offsets used for lookup.
+CRC32 detects accidental corruption; it is not an authenticity signature.
+
+Binary format version 1 is specified in [docs/snapshot-format.md](docs/snapshot-format.md).
+It is independent of the package release version and is not compatible with
+upstream Python pickle or C# serialization formats. Restoration allocates a
+dictionary and validates the stored index; it is not a zero-copy file mapping.
+
 ## Unicode and distance semantics
 
 The index, prefix length, and edit distance operate on MoonBit `Char` values:
@@ -226,10 +275,10 @@ your own dictionary before making performance claims.
 
 ## Compatibility and release scope
 
-Version 0.2.0 implements word and bigram dictionary management, single-word
-lookup, compound correction, and word segmentation. Corpus tokenization, regex
-ignore rules, automatic number/acronym exemptions, case transfer, and
-serialized-index persistence are not implemented.
+Version 0.3.0 implements word and bigram dictionary management, single-word
+lookup, compound correction, word segmentation, and serialized-index persistence.
+Corpus tokenization, regex ignore rules, automatic number/acronym exemptions,
+and case transfer are not implemented.
 
 Behavior follows [SymSpell](https://github.com/wolfgarbe/SymSpell) and
 [symspellpy 6.10.0](https://github.com/mammothb/symspellpy). Deliberate differences
@@ -266,6 +315,12 @@ optional bigram scoring. Upstream single-word ties are canonicalized to the
 port's lexical policy. Segmentation reference cases have no whitespace, casing,
 or NFKC changes; separate regressions verify the intentional whitespace fixes
 and normalization policy. Log probabilities are checked within `1e-9`.
+Persistence has 25 independent byte fixtures encoded using Python's
+`struct`, `itertools`, and `zlib`, plus round-trip, post-restore mutation,
+Unicode, truncation, corruption, and checksum-valid mutation tests. The same
+expected bytes are tested on every target. Index completeness counts are
+checked against exhaustive deletion sets with repeated and supplementary
+Unicode characters.
 Normal test runs need neither Python nor network access.
 
 To regenerate fixtures:
@@ -275,8 +330,12 @@ python -m venv .venv
 .venv/bin/python -m pip install -r requirements-dev.txt
 .venv/bin/python scripts/generate_fixtures.py
 .venv/bin/python scripts/generate_phrase_fixtures.py
+.venv/bin/python scripts/generate_snapshot_fixtures.py
 moon fmt
 ```
+
+The snapshot fixture generator uses only Python's standard library and can also
+be run directly with `python scripts/generate_snapshot_fixtures.py`.
 
 ## License
 

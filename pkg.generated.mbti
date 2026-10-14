@@ -18,6 +18,8 @@ pub(all) suberror SymSpellError {
   InvalidFrequencyCount(Int64)
   InvalidBigramTerm(String)
   InvalidSegmentationWordLength(Int)
+  InvalidSnapshot(Int, String)
+  UnsupportedSnapshotVersion(UInt)
 } derive(Eq, @debug.Debug)
 
 // Types and methods
@@ -56,6 +58,7 @@ pub fn SymSpell::delete_bigram_entry(Self, String) -> Bool
 pub fn SymSpell::delete_dictionary_entry(Self, String) -> Bool
 pub fn SymSpell::entry_count(Self) -> Int
 pub fn SymSpell::frequency(Self, String) -> Int64?
+pub fn SymSpell::from_snapshot(Bytes) -> Self raise SymSpellError
 pub fn SymSpell::load_bigram_dictionary(Self, String, term_index? : Int, count_index? : Int, separator? : Char, strict? : Bool) -> BigramLoadReport raise SymSpellError
 pub fn SymSpell::load_dictionary(Self, String, term_index? : Int, count_index? : Int, separator? : Char, strict? : Bool) -> LoadReport raise SymSpellError
 pub fn SymSpell::lookup(Self, String, verbosity? : Verbosity, max_edit_distance? : Int, include_unknown? : Bool) -> Array[Suggestion] raise SymSpellError
@@ -63,6 +66,7 @@ pub fn SymSpell::lookup_compound(Self, String, max_edit_distance? : Int) -> Arra
 pub fn SymSpell::new(max_dictionary_edit_distance? : Int, prefix_length? : Int, count_threshold? : Int64, corpus_size? : Int64) -> Self raise SymSpellError
 pub fn SymSpell::pending_word_count(Self) -> Int
 pub fn SymSpell::set_bigram_count(Self, String, Int64) -> Bool raise SymSpellError
+pub fn SymSpell::to_snapshot(Self) -> Bytes
 pub fn SymSpell::word_count(Self) -> Int
 pub fn SymSpell::word_segmentation(Self, String, max_edit_distance? : Int, max_segmentation_word_length? : Int) -> Composition raise SymSpellError
 

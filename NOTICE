@@ -18,3 +18,7 @@ Segmentation whitespace fixes and explicit casing/normalization policy are
 documented in README.mbt.md and covered by separate regression tests.
 No upstream frequency dictionaries are bundled. Supply a dictionary suitable
 for your application and follow its own license terms.
+
+The portable binary snapshot format is specific to this MoonBit library.
+Its byte fixtures are generated independently with Python's standard library;
+they do not use upstream serialization formats or bundled dictionaries.
