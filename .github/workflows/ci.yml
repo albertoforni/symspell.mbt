@@ -1,0 +1,49 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Install MoonBit
+        run: |
+          curl -fsSL https://cli.moonbitlang.com/install/unix.sh | bash
+          echo "$HOME/.moon/bin" >> "$GITHUB_PATH"
+      - name: Validate all targets
+        run: |
+          moon version --all
+          moon fmt --check
+          moon check --deny-warn --target all
+          moon test --deny-warn --target all
+          moon build --deny-warn --target all
+          moon info --target all
+          git diff --exit-code -- '*.mbti'
+
+  fixtures:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Install MoonBit
+        run: |
+          curl -fsSL https://cli.moonbitlang.com/install/unix.sh | bash
+          echo "$HOME/.moon/bin" >> "$GITHUB_PATH"
+      - name: Verify reproducible reference fixtures
+        run: |
+          python -m pip install -r requirements-dev.txt
+          python scripts/generate_fixtures.py
+          moon fmt compatibility_test.mbt distance_reference_wbtest.mbt
+          git diff --exit-code -- compatibility_test.mbt distance_reference_wbtest.mbt

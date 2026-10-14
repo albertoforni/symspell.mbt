@@ -1,0 +1,56 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "albertoforni/symspell"
+
+import {
+  "moonbitlang/core/debug",
+}
+
+// Values
+
+// Errors
+pub(all) suberror SymSpellError {
+  InvalidEditDistance(Int)
+  InvalidPrefixLength(Int)
+  InvalidCountThreshold(Int64)
+  InvalidColumns(Int, Int)
+  InvalidDictionaryLine(Int, String)
+} derive(Eq, @debug.Debug)
+
+// Types and methods
+pub(all) struct LoadReport {
+  parsed_entries : Int
+  added_words : Int
+  skipped_lines : Int
+} derive(Eq, @debug.Debug)
+
+pub(all) struct Suggestion {
+  term : String
+  distance : Int
+  count : Int64
+} derive(Eq, @debug.Debug)
+
+pub struct SymSpell {
+  // private fields
+}
+pub fn SymSpell::create_dictionary_entry(Self, String, Int64) -> Bool
+pub fn SymSpell::delete_dictionary_entry(Self, String) -> Bool
+pub fn SymSpell::entry_count(Self) -> Int
+pub fn SymSpell::frequency(Self, String) -> Int64?
+pub fn SymSpell::load_dictionary(Self, String, term_index? : Int, count_index? : Int, separator? : Char, strict? : Bool) -> LoadReport raise SymSpellError
+pub fn SymSpell::lookup(Self, String, verbosity? : Verbosity, max_edit_distance? : Int, include_unknown? : Bool) -> Array[Suggestion] raise SymSpellError
+pub fn SymSpell::new(max_dictionary_edit_distance? : Int, prefix_length? : Int, count_threshold? : Int64) -> Self raise SymSpellError
+pub fn SymSpell::pending_word_count(Self) -> Int
+pub fn SymSpell::word_count(Self) -> Int
+
+pub(all) enum Verbosity {
+  Top
+  Closest
+  All
+} derive(Eq, @debug.Debug)
+
+type Word
+
+// Type aliases
+
+// Traits
+

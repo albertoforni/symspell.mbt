@@ -1,0 +1,17 @@
+symspell.mbt is a pure MoonBit implementation of the Symmetric Delete algorithm.
+Its dictionary and lookup behavior follows these MIT-licensed implementations:
+
+Original C# SymSpell by Wolf Garbe:
+https://github.com/wolfgarbe/SymSpell
+Copyright (c) 2021 Wolf Garbe
+
+Python symspellpy by mmb L:
+https://github.com/mammothb/symspellpy
+Copyright (c) 2025 mmb L
+Reference release: 6.10.0
+Source inspected at commit 3566f13f16284ebe613910191828dff43de4e2ba.
+
+The upstream copyright notices and MIT license are preserved in LICENSE.
+The checked-in compatibility fixtures are generated using symspellpy 6.10.0.
+No upstream frequency dictionaries are bundled. Supply a dictionary suitable
+for your application and follow its own license terms.
