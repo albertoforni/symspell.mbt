@@ -12,4 +12,19 @@ fn main {
       )
     }
   }
+  let phrases = try! @symspell.SymSpell::new()
+  let _ = try! phrases.load_dictionary(
+    "where 2\nis 2\nwhereas 2\nhello 100\nworld 90\nsteam 1\nmachine 1\n",
+  )
+  let _ = try! phrases.load_bigram_dictionary("where is 10")
+  for query in ["whereiz", "ste am machie"] {
+    let result = (try! phrases.lookup_compound(query))[0]
+    println("\{query} => \{result.term} (distance \{result.distance})")
+  }
+  for query in ["helloworld", "helo world"] {
+    let result = try! phrases.word_segmentation(query)
+    println(
+      "\{query} => \{result.corrected_string} (penalty \{result.distance_sum})",
+    )
+  }
 }

@@ -58,7 +58,7 @@ def osa_oracle(left: str, right: str) -> int:
 
 
 def score_key(item: tuple[str, int, int]) -> tuple[int, int, bytes]:
-    # MoonBit String comparison follows UTF-16 order. Upstream leaves exact
+    # The port's lexical comparison follows UTF-16 order. Upstream leaves exact
     # score ties unspecified; this port resolves them deterministically.
     term, distance, count = item
     return distance, -count, term.encode("utf-16-be")

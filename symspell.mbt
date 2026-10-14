@@ -22,6 +22,10 @@ pub(all) suberror SymSpellError {
   InvalidCountThreshold(Int64)
   InvalidColumns(Int, Int)
   InvalidDictionaryLine(Int, String)
+  InvalidCorpusSize(Int64)
+  InvalidFrequencyCount(Int64)
+  InvalidBigramTerm(String)
+  InvalidSegmentationWordLength(Int)
 } derive(Eq, Debug)
 
 ///|
@@ -43,6 +47,9 @@ pub struct SymSpell {
   priv words : Map[String, Word]
   priv pending : Map[String, Int64]
   priv deletes : Map[String, Array[Word]]
+  priv bigrams : Map[String, Int64]
+  priv mut bigram_count_min : Int64
+  priv corpus_size : Int64
   priv max_dictionary_edit_distance : Int
   priv prefix_length : Int
   priv count_threshold : Int64
@@ -52,10 +59,13 @@ pub struct SymSpell {
 ///|
 /// Create a dictionary. `prefix_length` must exceed the maximum edit distance.
 /// The default settings match upstream SymSpell: distance 2, prefix 7, count 1.
+/// `corpus_size` must be positive and is used for phrase probability estimates;
+/// its default is the corpus frequency total used by upstream SymSpell.
 pub fn SymSpell::new(
   max_dictionary_edit_distance? : Int = 2,
   prefix_length? : Int = 7,
   count_threshold? : Int64 = 1L,
+  corpus_size? : Int64 = 1024908267229L,
 ) -> SymSpell raise SymSpellError {
   if max_dictionary_edit_distance < 0 {
     raise InvalidEditDistance(max_dictionary_edit_distance)
@@ -66,10 +76,16 @@ pub fn SymSpell::new(
   if count_threshold < 0L {
     raise InvalidCountThreshold(count_threshold)
   }
+  if corpus_size <= 0L {
+    raise InvalidCorpusSize(corpus_size)
+  }
   {
     words: Map([]),
     pending: Map([]),
     deletes: Map([]),
+    bigrams: Map([]),
+    bigram_count_min: max_frequency,
+    corpus_size,
     max_dictionary_edit_distance,
     prefix_length,
     count_threshold,
@@ -205,10 +221,7 @@ pub fn SymSpell::lookup(
   max_edit_distance? : Int,
   include_unknown? : Bool = false,
 ) -> Array[Suggestion] raise SymSpellError {
-  let limit = max_edit_distance.unwrap_or(self.max_dictionary_edit_distance)
-  if limit < 0 || limit > self.max_dictionary_edit_distance {
-    raise InvalidEditDistance(limit)
-  }
+  let limit = self.resolve_edit_distance(max_edit_distance)
   let query = term.to_array()
   let suggestions : Array[Suggestion] = []
   if self.words.get(term) is Some(word) {
@@ -246,6 +259,18 @@ pub fn SymSpell::lookup(
     suggestions.push({ term, distance: limit + 1, count: 0L })
   }
   suggestions
+}
+
+///|
+fn SymSpell::resolve_edit_distance(
+  self : SymSpell,
+  requested : Int?,
+) -> Int raise SymSpellError {
+  let limit = requested.unwrap_or(self.max_dictionary_edit_distance)
+  if limit < 0 || limit > self.max_dictionary_edit_distance {
+    raise InvalidEditDistance(limit)
+  }
+  limit
 }
 
 ///|

@@ -1,12 +1,12 @@
 # SymSpell for MoonBit
 
-A pure MoonBit implementation of SymSpell's single-word spelling correction.
+A pure MoonBit implementation of SymSpell spelling correction and segmentation.
 It uses a precomputed deletion index to find candidates, then verifies them
 with cutoff-aware optimal string alignment distance and ranks them by frequency.
 
 The library depends only on `moonbitlang/core` and runs on native, JavaScript,
 WebAssembly, and WebAssembly GC. There are no C bindings or runtime dictionary
-downloads. The module name is `albertoforni/symspell`; version 0.1.0 is currently
+downloads. The module name is `albertoforni/symspell`; version 0.2.0 is currently
 a local project and has not been published to Mooncakes.
 
 ## Run the example
@@ -18,7 +18,9 @@ moon run cmd/main --target native
 ```
 
 The example corrects `memebers` to `members`, `cafe` to `café`, `東亰` to `東京`,
-and `😃` to `😀` using a small, embedded dictionary. It also runs with
+and `😃` to `😀` using a small, embedded dictionary. It also demonstrates compound
+correction and segmentation, including `whereiz` → `where is`,
+`ste am machie` → `steam machine`, and `helloworld` → `hello world`. It runs with
 `--target js`, `--target wasm`, or `--target wasm-gc`.
 
 ## Basic usage
@@ -81,6 +83,73 @@ dictionary's configured maximum, but cannot exceed it. The unknown fallback is
 returned only when there are no suggestions; its distance is the lookup limit
 plus one and its frequency is zero.
 
+## Compound correction
+
+`lookup_compound()` corrects individual words and repairs accidentally missing
+or inserted spaces. It splits the input on Unicode whitespace, checks possible
+word merges, and uses observed bigram frequencies or a word-frequency estimate
+to choose split candidates. It returns an array containing one suggestion.
+
+```mbt check
+///|
+test {
+  let dictionary = @symspell.SymSpell::new()
+  let _ = dictionary.load_dictionary("where 2\nis 2\nwhereas 2\n")
+  let _ = dictionary.load_bigram_dictionary("where is 10")
+  let correction = dictionary.lookup_compound("whereiz")[0]
+  assert_eq(correction.term, "where is")
+  assert_eq(correction.distance, 2)
+  assert_eq(correction.count, 10L)
+}
+```
+
+The edit limit applies to the individual word lookups. The final phrase can have
+a larger distance because it can contain multiple corrections and space changes.
+Its `distance` is the OSA distance between the original input and final output;
+its `count` is an estimated aggregate frequency, which can round down to zero.
+An unknown word stays unchanged if no suitable correction is found.
+
+`corpus_size` in `new()` controls probability estimates. Its default is
+`1024908267229`, matching upstream SymSpell. Pass a positive corpus total
+consistent with your own frequency data when using a custom dictionary. Phrase
+frequency estimates saturate at Int64's maximum instead of overflowing.
+
+## Word segmentation
+
+`word_segmentation()` inserts missing word boundaries and optionally corrects
+spelling. The result contains the segmented input, the corrected output, an
+accumulated edit penalty, and the sum of base-10 word log probabilities.
+
+```mbt check
+///|
+test {
+  let dictionary = @symspell.SymSpell::new()
+  let _ = dictionary.load_dictionary("hello 100\nworld 90")
+  let joined = dictionary.word_segmentation("helloworld")
+  assert_eq(joined.corrected_string, "hello world")
+  assert_eq(joined.distance_sum, 1)
+  let corrected = dictionary.word_segmentation("helo world")
+  assert_eq(corrected.segmented_string, "helo world")
+  assert_eq(corrected.corrected_string, "hello world")
+  assert_eq(corrected.distance_sum, 1)
+}
+```
+
+Set `max_edit_distance=0` for segmentation without spelling correction.
+`max_segmentation_word_length` limits the number of non-whitespace Unicode
+characters in each input candidate. It defaults to the longest indexed term,
+or the input length when there are no indexed words. A supplied limit must be
+positive. The search uses a bounded circular buffer and linked paths; the
+completed strings are materialized once after the best path is selected.
+
+Boundary whitespace is trimmed and whitespace runs become a single space before
+the search. Existing word boundaries do not introduce empty words or duplicate
+spaces. Unknown candidates receive a length-based penalty and a prior computed
+in log space. Empty input has a zero penalty and log probability. A known word
+with zero frequency has negative-infinite log probability. `distance_sum` is
+the accumulated segmentation penalty after whitespace normalization, including
+unknown-word penalties; it is not the final phrase's OSA distance.
+
 ## Dictionary loading and updates
 
 `load_dictionary(text)` accepts Unicode whitespace-separated word/frequency
@@ -112,6 +181,24 @@ until their accumulated frequency reaches the threshold. `word_count()`,
 statistics without exposing mutable internal collections. Removal also supports
 below-threshold terms and cleans all associated deletion buckets.
 
+## Bigram dictionaries
+
+`load_bigram_dictionary(text)` reads `first second count` rows. An explicit
+delimiter instead reads a pair in the term column, for example
+`first second$42`. The default count column is 2 for whitespace-separated input
+and 1 for a custom delimiter. Override `term_index` and `count_index` for other
+column layouts. Parsing is strict and transactional by default; `strict=false`
+skips malformed rows. A `BigramLoadReport` gives parsed entries, new pairs, and
+skipped lines.
+
+Use `set_bigram_count("first second", count)` for an incremental update,
+`bigram_frequency(pair)` to read it, and `delete_bigram_entry(pair)` to remove
+it. A pair must contain exactly two whitespace-separated terms; its whitespace
+is canonicalized but its spelling and case are retained. Bigram counts are
+nonnegative. Unlike word-frequency additions, repeated bigram entries replace
+their count. Replacement and removal refresh the minimum-frequency cap used
+for unobserved pairs. `bigram_count()` returns the number of stored pairs.
+
 ## Unicode and distance semantics
 
 The index, prefix length, and edit distance operate on MoonBit `Char` values:
@@ -119,7 +206,8 @@ Unicode code points, including supplementary characters such as emoji. They
 never slice UTF-8 bytes or UTF-16 surrogate pairs. A grapheme containing multiple
 code points, such as `👩‍💻`, consequently counts as multiple characters.
 
-Matching is case-sensitive and does not normalize text implicitly. Normalize
+Matching is case-sensitive and does not perform character normalization or case
+folding implicitly. Phrase APIs normalize only whitespace. Normalize
 dictionary terms and queries consistently in the application when canonical
 equivalence or case-insensitive lookup is required. For example, `é` and
 `e` plus a combining acute accent have distance 2 without normalization.
@@ -138,14 +226,20 @@ your own dictionary before making performance claims.
 
 ## Compatibility and release scope
 
-Version 0.1.0 implements dictionary management and single-word lookup. Compound
-correction, bigram dictionaries, word segmentation, corpus tokenization, regex
-ignore rules, case transfer, and serialized-index persistence are not implemented.
+Version 0.2.0 implements word and bigram dictionary management, single-word
+lookup, compound correction, and word segmentation. Corpus tokenization, regex
+ignore rules, automatic number/acronym exemptions, case transfer, and
+serialized-index persistence are not implemented.
 
 Behavior follows [SymSpell](https://github.com/wolfgarbe/SymSpell) and
 [symspellpy 6.10.0](https://github.com/mammothb/symspellpy). Deliberate differences
 are deterministic lexical tie-breaking, Unicode whitespace parsing, strict
-transactional loading by default, and removal of below-threshold terms.
+transactional loading by default, removal of below-threshold terms, and explicit
+character normalization/casing. Compound correction uses whitespace tokenization,
+corresponding to upstream's `split_by_space=True` on already-normalized text.
+Segmentation counts non-whitespace characters in its word window, normalizes
+whitespace runs, and avoids empty fragments. This fixes duplicated existing
+spaces in sparse dictionaries and defines behavior for empty input/dictionaries.
 Each suggested term appears once. The reference sometimes emits duplicate
 one-character candidates; fixture generation keeps the best-distance candidate
 and checks every result against an independent exhaustive OSA calculation.
@@ -166,6 +260,12 @@ containing an emoji. They cover edit limits 0 through 4, short and long prefixes
 two frequency thresholds, repeated characters, empty strings, non-Latin words,
 and supplementary Unicode characters. Hand-written tests cover dictionary
 mutation, saturated counts, parsing errors, and Unicode normalization policy.
+The phrase fixtures add 4,728 compound and 3,504 segmentation cases, covering
+two synthetic dictionaries, two corpus totals, edit limits 0 through 2, and
+optional bigram scoring. Upstream single-word ties are canonicalized to the
+port's lexical policy. Segmentation reference cases have no whitespace, casing,
+or NFKC changes; separate regressions verify the intentional whitespace fixes
+and normalization policy. Log probabilities are checked within `1e-9`.
 Normal test runs need neither Python nor network access.
 
 To regenerate fixtures:
@@ -174,6 +274,7 @@ To regenerate fixtures:
 python -m venv .venv
 .venv/bin/python -m pip install -r requirements-dev.txt
 .venv/bin/python scripts/generate_fixtures.py
+.venv/bin/python scripts/generate_phrase_fixtures.py
 moon fmt
 ```
 

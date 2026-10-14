@@ -45,5 +45,6 @@ jobs:
         run: |
           python -m pip install -r requirements-dev.txt
           python scripts/generate_fixtures.py
-          moon fmt compatibility_test.mbt distance_reference_wbtest.mbt
-          git diff --exit-code -- compatibility_test.mbt distance_reference_wbtest.mbt
+          python scripts/generate_phrase_fixtures.py
+          moon fmt compatibility_test.mbt distance_reference_wbtest.mbt phrase_compatibility_test.mbt
+          git diff --exit-code -- compatibility_test.mbt distance_reference_wbtest.mbt phrase_compatibility_test.mbt

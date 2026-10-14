@@ -13,5 +13,8 @@ Source inspected at commit 3566f13f16284ebe613910191828dff43de4e2ba.
 
 The upstream copyright notices and MIT license are preserved in LICENSE.
 The checked-in compatibility fixtures are generated using symspellpy 6.10.0.
+Phrase fixtures use synthetic dictionaries and canonical single-word tie order.
+Segmentation whitespace fixes and explicit casing/normalization policy are
+documented in README.mbt.md and covered by separate regression tests.
 No upstream frequency dictionaries are bundled. Supply a dictionary suitable
 for your application and follow its own license terms.
