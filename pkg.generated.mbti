@@ -36,6 +36,11 @@ pub(all) struct Composition {
   log_prob_sum : Double
 } derive(Eq, @debug.Debug)
 
+pub(all) struct CorpusReport {
+  parsed_tokens : Int
+  added_words : Int
+} derive(Eq, @debug.Debug)
+
 pub(all) struct LoadReport {
   parsed_entries : Int
   added_words : Int
@@ -53,6 +58,7 @@ pub struct SymSpell {
 }
 pub fn SymSpell::bigram_count(Self) -> Int
 pub fn SymSpell::bigram_frequency(Self, String) -> Int64?
+pub fn SymSpell::create_dictionary(Self, String) -> CorpusReport
 pub fn SymSpell::create_dictionary_entry(Self, String, Int64) -> Bool
 pub fn SymSpell::delete_bigram_entry(Self, String) -> Bool
 pub fn SymSpell::delete_dictionary_entry(Self, String) -> Bool

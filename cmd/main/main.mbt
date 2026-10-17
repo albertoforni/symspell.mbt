@@ -33,4 +33,10 @@ fn main {
   println(
     "Restored \{restored.word_count()} words from \{snapshot.length()} snapshot bytes: whereiz => \{correction.term}",
   )
+  let corpus = try! @symspell.SymSpell::new(corpus_size=3L)
+  let report = corpus.create_dictionary("hello, world! hello")
+  let correction = (try! corpus.lookup("helo", verbosity=Top))[0]
+  println(
+    "Corpus: \{report.parsed_tokens} tokens, \{report.added_words} new words; helo => \{correction.term} (frequency \{correction.count})",
+  )
 }

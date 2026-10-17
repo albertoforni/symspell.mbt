@@ -1,5 +1,14 @@
 # Changelog
 
+## Unreleased
+
+- Add plain-text corpus building with occurrence and newly indexed word reports.
+- Preserve explicit casing and normalization while using symspellpy-style tokens.
+- Pin Unicode letter/number token boundaries to a generated Unicode 16.0.0 table.
+- Reuse frequency saturation, threshold promotion, and dictionary persistence.
+- Add 416 incremental corpus builds against offline upstream tokenization fixtures.
+- Verify Unicode classification totals over every scalar and corpus/phrase integration.
+
 ## 0.3.0 — 2026-10-14
 
 - Add deterministic binary dictionary snapshots and independent restoration.

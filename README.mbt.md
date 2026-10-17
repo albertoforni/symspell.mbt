@@ -21,7 +21,8 @@ The example corrects `memebers` to `members`, `cafe` to `café`, `東亰` to `�
 and `😃` to `😀` using a small, embedded dictionary. It also demonstrates compound
 correction and segmentation, including `whereiz` → `where is`,
 `ste am machie` → `steam machine`, and `helloworld` → `hello world`, then
-restores a dictionary from a binary snapshot. It runs with
+restores a dictionary from a binary snapshot and builds word frequencies from
+plain text. It runs with
 `--target js`, `--target wasm`, or `--target wasm-gc`.
 
 ## Basic usage
@@ -182,6 +183,56 @@ until their accumulated frequency reaches the threshold. `word_count()`,
 statistics without exposing mutable internal collections. Removal also supports
 below-threshold terms and cleans all associated deletion buckets.
 
+## Building a dictionary from a corpus
+
+`create_dictionary(text)` counts words in plain text and merges them into the
+current dictionary. It accepts an already-decoded `String`, with file reading
+or fetching handled by the application, just like `load_dictionary()`.
+
+```mbt check
+///|
+test {
+  let dictionary = @symspell.SymSpell::new(corpus_size=3L)
+  let report = dictionary.create_dictionary("hello, world! hello")
+  assert_eq(report, { parsed_tokens: 3, added_words: 2 })
+  assert_eq(dictionary.frequency("hello"), Some(2L))
+  assert_eq(dictionary.lookup("helo", verbosity=Top)[0].term, "hello")
+}
+```
+
+Tokens are maximal nonempty runs of Unicode letters and numbers (general
+categories `L*` and `N*`), plus straight and curly apostrophes (`'` and `’`).
+The category table is pinned to Unicode 16.0.0 and checked into the library,
+so token boundaries are identical on every target. Other characters separate
+tokens: `abc-def` and `abc_def` both produce `abc` and `def`; `don't` and
+`l’amour` each remain one word. Digits, including numeric-only terms, are
+counted. Apostrophes are retained at token edges and on their own, following
+symspellpy's token pattern.
+
+Casing and character normalization stay exact, as in the other APIs: `Hello`
+and `hello` are distinct terms. Normalize the corpus and queries consistently
+in the application when needed. Combining marks are separators; for example,
+`e` followed by a combining acute accent produces `e`, while precomposed `é`
+remains `é`. Chinese text without separators forms a single token. For
+language-specific boundaries, tokenize in the application and call
+`create_dictionary_entry()` for each word.
+
+Each token adds one occurrence through the existing insertion API. Duplicate
+counts accumulate and saturate, and rare terms remain pending until they
+reach `count_threshold`. The returned `CorpusReport.parsed_tokens` counts all
+occurrences, including repetitions and pending words; `added_words` counts
+only terms newly admitted to the suggestion index. Empty or separator-only
+input returns zero counts. Corpus-built dictionaries support the same lookup,
+removal, and snapshot APIs as loaded frequency dictionaries.
+
+Repeated calls support incremental ingestion at token boundaries, such as
+whole lines or documents. Each call completes its last token; splitting
+`hello` across two calls would count the two fragments separately. Ingestion
+scans one token at a time without first collecting the corpus's word list.
+It builds unigram counts and leaves existing bigrams and the configured
+`corpus_size` unchanged. For phrase scoring, set `corpus_size` in `new()` to
+the token total appropriate for your source corpus.
+
 ## Bigram dictionaries
 
 `load_bigram_dictionary(text)` reads `first second count` rows. An explicit
@@ -275,10 +326,10 @@ your own dictionary before making performance claims.
 
 ## Compatibility and release scope
 
-Version 0.3.0 implements word and bigram dictionary management, single-word
-lookup, compound correction, word segmentation, and serialized-index persistence.
-Corpus tokenization, regex ignore rules, automatic number/acronym exemptions,
-and case transfer are not implemented.
+The library implements word and bigram dictionary management, plain-text
+corpus building, single-word lookup, compound correction, word segmentation,
+and serialized-index persistence. Regex ignore rules, automatic number/acronym
+exemptions, and case transfer are not implemented.
 
 Behavior follows [SymSpell](https://github.com/wolfgarbe/SymSpell) and
 [symspellpy 6.10.0](https://github.com/mammothb/symspellpy). Deliberate differences
@@ -286,6 +337,9 @@ are deterministic lexical tie-breaking, Unicode whitespace parsing, strict
 transactional loading by default, removal of below-threshold terms, and explicit
 character normalization/casing. Compound correction uses whitespace tokenization,
 corresponding to upstream's `split_by_space=True` on already-normalized text.
+Corpus building follows symspellpy's letter/number/apostrophe token boundaries
+with Unicode 16.0.0 categories and explicit casing, instead of its automatic
+lowercasing and Python-version-dependent Unicode categories.
 Segmentation counts non-whitespace characters in its word window, normalizes
 whitespace runs, and avoids empty fragments. This fixes duplicated existing
 spaces in sparse dictionaries and defines behavior for empty input/dictionaries.
@@ -321,6 +375,12 @@ Unicode, truncation, corruption, and checksum-valid mutation tests. The same
 expected bytes are tested on every target. Index completeness counts are
 checked against exhaustive deletion sets with repeated and supplementary
 Unicode characters.
+Corpus fixtures cover 52 upstream tokenization samples in 416 incremental
+builds across four frequency thresholds. Additional regressions cover casing,
+normalization, Unicode 16 additions, saturated counts, pending-word promotion,
+snapshot restoration, and phrase APIs. Unicode classification totals and
+code-point checksums are checked over every Unicode scalar against independent
+Python Unicode 16.0.0 results.
 Normal test runs need neither Python nor network access.
 
 To regenerate fixtures:
@@ -331,14 +391,21 @@ python -m venv .venv
 .venv/bin/python scripts/generate_fixtures.py
 .venv/bin/python scripts/generate_phrase_fixtures.py
 .venv/bin/python scripts/generate_snapshot_fixtures.py
+.venv/bin/python scripts/generate_corpus_fixtures.py
+python scripts/generate_corpus_unicode.py
 moon fmt
 ```
 
 The snapshot fixture generator uses only Python's standard library and can also
 be run directly with `python scripts/generate_snapshot_fixtures.py`.
+The corpus Unicode generator also uses only the standard library. It downloads
+the pinned UnicodeData.txt and verifies its SHA-256; pass
+`--unicode-data /path/to/UnicodeData.txt` to use an existing local copy.
 
 ## License
 
 MIT. Upstream notices are preserved in [LICENSE](LICENSE) and [NOTICE](NOTICE).
+The generated Unicode table uses data covered by
+[Unicode License V3](UNICODE-LICENSE.txt).
 No upstream frequency dictionaries are bundled; supply a dictionary suited to
 your application and follow its license terms.

@@ -47,5 +47,7 @@ jobs:
           python scripts/generate_fixtures.py
           python scripts/generate_phrase_fixtures.py
           python scripts/generate_snapshot_fixtures.py
-          moon fmt compatibility_test.mbt distance_reference_wbtest.mbt phrase_compatibility_test.mbt snapshot_compatibility_test.mbt
-          git diff --exit-code -- compatibility_test.mbt distance_reference_wbtest.mbt phrase_compatibility_test.mbt snapshot_compatibility_test.mbt
+          python scripts/generate_corpus_fixtures.py
+          python scripts/generate_corpus_unicode.py
+          moon fmt compatibility_test.mbt distance_reference_wbtest.mbt phrase_compatibility_test.mbt snapshot_compatibility_test.mbt corpus_compatibility_test.mbt corpus_unicode.mbt
+          git diff --exit-code -- compatibility_test.mbt distance_reference_wbtest.mbt phrase_compatibility_test.mbt snapshot_compatibility_test.mbt corpus_compatibility_test.mbt corpus_unicode.mbt
