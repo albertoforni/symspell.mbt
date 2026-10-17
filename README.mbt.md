@@ -324,6 +324,23 @@ verifier uses three reusable rows and a cutoff band; it does not scan the full
 dictionary during lookup. Lookup settings affect candidate work, so benchmark
 your own dictionary before making performance claims.
 
+## Performance
+
+The comparison harness measures release builds on native and JavaScript against
+a pinned `node-symspell` package, using the same real English dictionary and
+deterministic synthetic queries. It validates results before timing and records
+independent process samples, memory use, and snapshot size.
+
+```sh
+python scripts/benchmark.py --words 10000
+python scripts/benchmark.py --words 0
+```
+
+These optional benchmarks download a checksummed dictionary and install locked
+npm dependencies outside the library's dependency graph. See
+[benchmark methodology and recorded results](benchmarks/README.md) for workload
+details, reproducible commands, and the scope of performance comparisons.
+
 ## Compatibility and release scope
 
 The library implements word and bigram dictionary management, plain-text

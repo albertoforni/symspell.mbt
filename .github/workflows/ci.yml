@@ -51,3 +51,20 @@ jobs:
           python scripts/generate_corpus_unicode.py
           moon fmt compatibility_test.mbt distance_reference_wbtest.mbt phrase_compatibility_test.mbt snapshot_compatibility_test.mbt corpus_compatibility_test.mbt corpus_unicode.mbt
           git diff --exit-code -- compatibility_test.mbt distance_reference_wbtest.mbt phrase_compatibility_test.mbt snapshot_compatibility_test.mbt corpus_compatibility_test.mbt corpus_unicode.mbt
+
+  benchmark-smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Install MoonBit
+        run: |
+          curl -fsSL https://cli.moonbitlang.com/install/unix.sh | bash
+          echo "$HOME/.moon/bin" >> "$GITHUB_PATH"
+      - name: Validate benchmark drivers and baseline parity
+        run: python scripts/benchmark.py --words 1000 --queries 16 --samples 1 --warmup-ms 10 --sample-ms 20

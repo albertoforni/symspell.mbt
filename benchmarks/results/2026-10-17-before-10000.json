@@ -1,0 +1,488 @@
+{
+  "schema_version": 1,
+  "timestamp_utc": "2026-10-17T12:04:02.282177+00:00",
+  "environment": {
+    "platform": "Linux-7.2.5-3-omarchy-x86_64-with-glibc2.44",
+    "cpu": "12th Gen Intel(R) Core(TM) i9-12900H",
+    "cpu_affinity": [
+      0
+    ],
+    "node": "v26.8.1",
+    "moon": "moon 0.1.20260713 (75c7e1f 2026-07-13) ~/.moon/bin/moon\nmoonc v0.10.4+2cc641edf (2026-07-15) ~/.moon/bin/moonc\nmoonrun 0.1.20260713 (75c7e1f 2026-07-13) ~/.moon/bin/moonrun\n\nFeature flags enabled: rr_moon_mod,rr_moon_pkg",
+    "baseline": "node-symspell@0.1.0",
+    "baseline_lock_sha256": "7ee0ccecce0060977c1e9a099af828152b8cafd1a52f6b9b44c24b0eb9bb7494",
+    "git_commit": "fd9367ce11f809ef567e27271f5a3ce5a30e6275",
+    "git_status": "?? benchmarks/\n?? scripts/benchmark.py",
+    "driver_sha256": "08842f1f5aebb95696adf29b03d908193355d30301b8c836fe71a5400eac22f2",
+    "javascript_driver_sha256": "480db2ac664fd8250b4024ee77a231b1249de39af6bdd45410d12e159ce3cea3",
+    "symspell_source_sha256": "d06d9aac666775804f5ff5d69f45d6f599b2cf775adfac2141bf371b956ddb68"
+  },
+  "workload": {
+    "source_url": "https://raw.githubusercontent.com/wolfgarbe/SymSpell/c239062ae02961df18ab7da1671d01b4388204e0/SymSpell/frequency_dictionary_en_82_765.txt",
+    "source_sha256": "c604e1121e398ae7c7fbf777f11e0a0f2fa66eda932cb9fba1321466cf3acd7b",
+    "workload_sha256": "911e612448b21d5af09abc653408fc69dd6d7fe097de441756f4baaf973a071d",
+    "words": 10000,
+    "requested_words": 10000,
+    "queries_per_lookup_case": 512,
+    "compound_queries": 32,
+    "segmentation_queries": 32,
+    "corpus_tokens": 16384,
+    "seed": 20261017,
+    "alphabet": "lowercase ASCII; complete eligible prefix of the frequency-ranked upstream dictionary",
+    "typos": "equal counts of one deletion, insertion, replacement, and adjacent transposition; some edits may form existing words"
+  },
+  "configuration": {
+    "samples": 5,
+    "warmup_ms": 250,
+    "minimum_sample_ms": 500,
+    "max_edit_distance": 2,
+    "prefix_length": 7,
+    "count_threshold": 1
+  },
+  "validation": {
+    "mismatch_counts": {},
+    "examples": {}
+  },
+  "snapshot_bytes": 2553347,
+  "microseconds_per_operation": {
+    "javascript": {
+      "build": {
+        "median": 113228.80100000002,
+        "min": 92432.70966666668,
+        "max": 248198.94333333336,
+        "samples": [
+          92432.70966666668,
+          242697.76066666667,
+          248198.94333333336,
+          108681.04520000002,
+          113228.80100000002
+        ]
+      },
+      "corpus": {
+        "median": 41740.670249999996,
+        "min": 34403.973600000005,
+        "max": 94130.84733333332,
+        "samples": [
+          34403.973600000005,
+          87363.55549999996,
+          94130.84733333332,
+          40454.198461538464,
+          41740.670249999996
+        ]
+      },
+      "exact_top": {
+        "median": 0.03590366588968644,
+        "min": 0.028269350958929133,
+        "max": 0.07709412940173851,
+        "samples": [
+          0.028269350958929133,
+          0.07709412940173851,
+          0.07607288127239267,
+          0.03168765975562523,
+          0.03590366588968644
+        ]
+      },
+      "typo_top": {
+        "median": 5.660291478504333,
+        "min": 4.0229974520961935,
+        "max": 16.427833138020837,
+        "samples": [
+          4.0229974520961935,
+          16.427833138020837,
+          12.45718023140822,
+          4.965544545130077,
+          5.660291478504333
+        ]
+      },
+      "typo_closest": {
+        "median": 5.860376567178144,
+        "min": 4.006250200115265,
+        "max": 16.6707155720339,
+        "samples": [
+          4.006250200115265,
+          16.6707155720339,
+          14.344929659193848,
+          5.141497810444082,
+          5.860376567178144
+        ]
+      },
+      "typo_all": {
+        "median": 26.616719911317603,
+        "min": 17.162613486842123,
+        "max": 65.857469140625,
+        "samples": [
+          17.162613486842123,
+          65.857469140625,
+          60.43616245404405,
+          21.757021484375016,
+          26.616719911317603
+        ]
+      },
+      "miss_top": {
+        "median": 6.165742248919035,
+        "min": 5.202105302526594,
+        "max": 19.8016196875,
+        "samples": [
+          5.385471679687502,
+          19.227799249387235,
+          19.8016196875,
+          6.165742248919035,
+          5.202105302526594
+        ]
+      },
+      "compound": {
+        "median": 107.5746962756849,
+        "min": 77.87947978855722,
+        "max": 284.34552386363623,
+        "samples": [
+          77.87947978855722,
+          284.34552386363623,
+          277.9289248903512,
+          90.14859877873552,
+          107.5746962756849
+        ]
+      },
+      "segmentation": {
+        "median": 1094.640852083334,
+        "min": 797.2711953125,
+        "max": 2730.4087656250053,
+        "samples": [
+          797.2711953125,
+          2341.538513392858,
+          2730.4087656250053,
+          925.4906985294122,
+          1094.640852083334
+        ]
+      }
+    },
+    "moonbit_js": {
+      "build": {
+        "median": 232891.51799999995,
+        "min": 166755.12966666665,
+        "max": 527103.1740000001,
+        "samples": [
+          166755.12966666665,
+          527103.1740000001,
+          325645.03150000004,
+          196527.05133333334,
+          232891.51799999995
+        ]
+      },
+      "corpus": {
+        "median": 74984.61271428573,
+        "min": 53734.90129999998,
+        "max": 152765.22224999996,
+        "samples": [
+          53734.90129999998,
+          152765.22224999996,
+          113664.99519999998,
+          64022.75125,
+          74984.61271428573
+        ]
+      },
+      "exact_top": {
+        "median": 0.15624413687559993,
+        "min": 0.12590674753448494,
+        "max": 0.33018149140043945,
+        "samples": [
+          0.12590674753448494,
+          0.33018149140043945,
+          0.16979783220781908,
+          0.13466469998577973,
+          0.15624413687559993
+        ]
+      },
+      "typo_top": {
+        "median": 23.51847670200892,
+        "min": 19.29460772824756,
+        "max": 66.47191041666662,
+        "samples": [
+          19.29460772824756,
+          66.47191041666662,
+          39.94946656250001,
+          20.6077782796224,
+          23.51847670200892
+        ]
+      },
+      "typo_closest": {
+        "median": 29.22322093290439,
+        "min": 21.234920176630414,
+        "max": 70.62930329241077,
+        "samples": [
+          21.89835846354169,
+          70.62930329241077,
+          52.35500565378294,
+          21.234920176630414,
+          29.22322093290439
+        ]
+      },
+      "typo_all": {
+        "median": 39.22703804687501,
+        "min": 29.07886506204046,
+        "max": 92.10930060369323,
+        "samples": [
+          30.99884130859376,
+          92.10930060369323,
+          82.21673258463547,
+          29.07886506204046,
+          39.22703804687501
+        ]
+      },
+      "miss_top": {
+        "median": 7.953761083587402,
+        "min": 5.640615211925288,
+        "max": 15.950128591229838,
+        "samples": [
+          7.953761083587402,
+          15.950128591229838,
+          8.190147037760406,
+          5.640615211925288,
+          6.75898805226293
+        ]
+      },
+      "compound": {
+        "median": 420.22516694078894,
+        "min": 349.74606388888924,
+        "max": 911.3988402777771,
+        "samples": [
+          637.6580112500005,
+          911.3988402777771,
+          420.22516694078894,
+          349.74606388888924,
+          404.52497275641065
+        ]
+      },
+      "segmentation": {
+        "median": 3245.032737500003,
+        "min": 2734.799661458335,
+        "max": 7022.886947916675,
+        "samples": [
+          3633.9743749999966,
+          7022.886947916675,
+          3245.032737500003,
+          2734.799661458335,
+          3226.1174437500017
+        ]
+      },
+      "snapshot_save": {
+        "median": 372622.88099999935,
+        "min": 349293.3075000001,
+        "max": 979143.9819999996,
+        "samples": [
+          349293.3075000001,
+          979143.9819999996,
+          372622.88099999935,
+          359027.3004999999,
+          418732.35250000015
+        ]
+      },
+      "snapshot_restore": {
+        "median": 180883.26299999972,
+        "min": 142690.76274999997,
+        "max": 392384.89299999946,
+        "samples": [
+          142690.76274999997,
+          392384.89299999946,
+          180883.26299999972,
+          152375.04025,
+          199606.02899999986
+        ]
+      }
+    },
+    "moonbit_native": {
+      "build": {
+        "median": 121390.26699999999,
+        "min": 100053.78516666667,
+        "max": 277424.0355,
+        "samples": [
+          100053.78516666667,
+          251600.359,
+          277424.0355,
+          116392.1724,
+          121390.26699999999
+        ]
+      },
+      "corpus": {
+        "median": 43779.00316666667,
+        "min": 37009.57007142857,
+        "max": 94029.16716666667,
+        "samples": [
+          37009.57007142857,
+          89741.62783333333,
+          94029.16716666667,
+          43779.00316666667,
+          40606.31669230769
+        ]
+      },
+      "exact_top": {
+        "median": 0.16395694928235688,
+        "min": 0.1450492696304582,
+        "max": 0.4172565843923537,
+        "samples": [
+          0.1450492696304582,
+          0.39944341289621677,
+          0.4172565843923537,
+          0.16395694928235688,
+          0.16312443595237597
+        ]
+      },
+      "typo_top": {
+        "median": 23.38165745907738,
+        "min": 16.972620049838362,
+        "max": 55.679215928819445,
+        "samples": [
+          16.972620049838362,
+          49.58324765625,
+          55.679215928819445,
+          23.38165745907738,
+          23.252430505087208
+        ]
+      },
+      "typo_closest": {
+        "median": 23.328432570684523,
+        "min": 16.93977714170259,
+        "max": 49.71181484375,
+        "samples": [
+          16.93977714170259,
+          49.71181484375,
+          49.062533300781254,
+          23.328432570684523,
+          20.37279431152344
+        ]
+      },
+      "typo_all": {
+        "median": 28.250236830357142,
+        "min": 21.007645362367022,
+        "max": 81.87306526692709,
+        "samples": [
+          21.007645362367022,
+          81.87306526692709,
+          57.638655815972214,
+          28.250236830357142,
+          24.767206689453126
+        ]
+      },
+      "miss_top": {
+        "median": 6.948304022606384,
+        "min": 5.97442636480564,
+        "max": 16.28458798828125,
+        "samples": [
+          5.97442636480564,
+          16.28458798828125,
+          15.542780629960317,
+          6.948304022606384,
+          6.817043674045139
+        ]
+      },
+      "compound": {
+        "median": 336.3012539893617,
+        "min": 273.2490964439655,
+        "max": 740.8730525568182,
+        "samples": [
+          273.2490964439655,
+          463.97634742647057,
+          740.8730525568182,
+          336.3012539893617,
+          329.30805598958335
+        ]
+      },
+      "segmentation": {
+        "median": 2746.496755208333,
+        "min": 2338.5929910714285,
+        "max": 6417.456458333334,
+        "samples": [
+          2338.5929910714285,
+          6417.456458333334,
+          6121.4884375,
+          2746.496755208333,
+          2741.796630208333
+        ]
+      },
+      "snapshot_save": {
+        "median": 97267.375,
+        "min": 65492.53125,
+        "max": 212412.621,
+        "samples": [
+          65492.53125,
+          195468.081,
+          212412.621,
+          97267.375,
+          87185.74133333332
+        ]
+      },
+      "snapshot_restore": {
+        "median": 72294.86271428571,
+        "min": 60707.221777777784,
+        "max": 186557.80633333334,
+        "samples": [
+          72294.86271428571,
+          141614.61025,
+          186557.80633333334,
+          66870.492,
+          60707.221777777784
+        ]
+      }
+    }
+  },
+  "speedup_vs_node_symspell": {
+    "moonbit_js": {
+      "build": 0.48618688208301364,
+      "corpus": 0.5566564757631635,
+      "exact_top": 0.22979208441128635,
+      "typo_top": 0.24067423882180422,
+      "typo_closest": 0.20053835203974904,
+      "typo_all": 0.6785299435433159,
+      "miss_top": 0.7751983224190696,
+      "compound": 0.25599298837530715,
+      "segmentation": 0.3373281383061341
+    },
+    "moonbit_native": {
+      "build": 0.9327667184388022,
+      "corpus": 0.9534403990674082,
+      "exact_top": 0.2189822758159234,
+      "typo_top": 0.24208255930577144,
+      "typo_closest": 0.2512117584163171,
+      "typo_all": 0.9421768769993392,
+      "miss_top": 0.8873736999501929,
+      "compound": 0.3198759891602659,
+      "segmentation": 0.39855894604918296
+    }
+  },
+  "dictionary_process_peak_rss_kib": {
+    "javascript": null,
+    "moonbit_js": null,
+    "moonbit_native": null
+  },
+  "suite_process_peak_rss_kib": {
+    "javascript": [
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    "moonbit_js": [
+      null,
+      null,
+      null,
+      null,
+      null
+    ],
+    "moonbit_native": [
+      null,
+      null,
+      null,
+      null,
+      null
+    ]
+  },
+  "notes": [
+    "Medians of per-process batch means; these are not individual-query tail latencies.",
+    "Compilation, process startup, source I/O, dictionary setup for queries, and validation are excluded from timings.",
+    "Build includes parsing valid frequency text and constructing the index. Corpus uses 16,384 deterministic synthetic tokens from real dictionary words.",
+    "JavaScript file-loading methods are adapted to in-memory input using the package's unmodified insertion and tokenization methods.",
+    "Memory is Linux process peak RSS including runtime, workload input, and index; not isolated retained dictionary size.",
+    "No snapshot speedup is claimed: the JavaScript baseline has no equivalent API. Phrase speedups are suppressed if outputs differ.",
+    "TOP validation permits lexical ties with identical distance/frequency; CLOSEST and ALL compare full result sets outside timings."
+  ]
+}

@@ -7,3 +7,6 @@ target
 .venv/
 __pycache__/
 *.pyc
+benchmarks/node_modules/
+benchmarks/.cache/
+benchmarks/generated/

@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+- Add reproducible release-mode benchmarks against a locked JavaScript SymSpell port.
+- Measure build, corpus ingestion, lookup modes, phrase APIs, snapshots, and peak RSS.
+- Generate query deletion layers lazily as the best edit-distance cutoff tightens.
+- Trim common distance affixes, reuse candidate buffers, and handle one-edit matches directly.
+- Cache immutable word hashes and keep only the best candidate in Top lookup mode.
+- Screen incompatible word character sets before distance scoring on native and Wasm.
+- Preserve the public API and snapshot format, with independent distance regressions.
 - Add plain-text corpus building with occurrence and newly indexed word reports.
 - Preserve explicit casing and normalization while using symspellpy-style tokens.
 - Pin Unicode letter/number token boundaries to a generated Unicode 16.0.0 table.

@@ -97,7 +97,13 @@ pub fn SymSpell::from_snapshot(data : Bytes) -> SymSpell raise SymSpellError {
       raise InvalidSnapshot(offset, "indexed frequency is below threshold")
     }
     let chars = term.to_array()
-    let word = Word::{ term, chars, count }
+    let word = Word::{
+      term,
+      chars,
+      term_hash: term.hash(),
+      signature: character_signature(chars),
+      count,
+    }
     words.push(word)
     dictionary.words[term] = word
     dictionary.max_word_length = Int::max(

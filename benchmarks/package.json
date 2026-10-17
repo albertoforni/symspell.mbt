@@ -1,0 +1,8 @@
+{
+  "name": "symspell-comparison-benchmarks",
+  "private": true,
+  "description": "Pinned JavaScript comparison; not a library dependency",
+  "dependencies": {
+    "node-symspell": "0.1.0"
+  }
+}

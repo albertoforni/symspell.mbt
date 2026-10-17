@@ -38,7 +38,52 @@ let max_frequency : Int64 = 9223372036854775807L
 struct Word {
   term : String
   chars : Array[Char]
+  term_hash : Int
+  signature : UInt
   mut count : Int64
+}
+
+///|
+/// Candidate de-duplication uses the immutable term and its cached hash, not
+/// the frequency (which may change between lookups).
+impl Eq for Word with fn equal(self, other) {
+  self.term == other.term
+}
+
+///|
+impl Hash for Word with fn hash_combine(self, hasher) {
+  self.term.hash_combine(hasher)
+}
+
+///|
+impl Hash for Word with fn hash(self) {
+  self.term_hash
+}
+
+///|
+/// A missing bit needs at least one insertion/replacement (or deletion in the
+/// opposite direction). Collisions only weaken this lower bound, so the mask
+/// remains safe for every Unicode character, including supplementary ones.
+fn character_signature(chars : Array[Char]) -> UInt {
+  let mut signature = 0U
+  for character in chars {
+    signature = signature | (1U << (character.to_int() & 31))
+  }
+  signature
+}
+
+///|
+// Native and Wasm have an intrinsic population count. Keep JavaScript's hot
+// lookup path free of the software bit-count screen and its extra work.
+#cfg(target="js")
+fn use_character_filter() -> Bool {
+  false
+}
+
+///|
+#cfg(not(target="js"))
+fn use_character_filter() -> Bool {
+  true
 }
 
 ///|
@@ -148,7 +193,13 @@ pub fn SymSpell::create_dictionary_entry(
   }
   self.pending.remove(term)
   let chars = term.to_array()
-  let word = { term, chars, count }
+  let word = {
+    term,
+    chars,
+    term_hash: term.hash(),
+    signature: character_signature(chars),
+    count,
+  }
   self.words[term] = word
   self.max_word_length = Int::max(self.max_word_length, chars.length())
   for
@@ -224,38 +275,89 @@ pub fn SymSpell::lookup(
   include_unknown? : Bool = false,
 ) -> Array[Suggestion] raise SymSpellError {
   let limit = self.resolve_edit_distance(max_edit_distance)
-  let query = term.to_array()
   let suggestions : Array[Suggestion] = []
-  if self.words.get(term) is Some(word) {
+  let exact = self.words.get(term)
+  if exact is Some(word) {
     suggestions.push({ term, distance: 0, count: word.count })
     if verbosity != All {
       return suggestions
     }
   }
+  let query = term.to_array()
   if limit > 0 && query.length() - limit <= self.max_word_length {
-    let considered = @set.Set([term])
+    let signature = if use_character_filter() {
+      character_signature(query)
+    } else {
+      0U
+    }
+    let considered : @set.Set[Word] = @set.Set([])
+    if exact is Some(word) {
+      considered.add(word)
+    }
+    let workspace = OsaWorkspace::new()
     let mut cutoff = limit
-    for key in deletion_variants(query, self.prefix_length, limit) {
-      if self.deletes.get(key) is Some(bucket) {
-        for word in bucket {
-          if considered.contains(word.term) {
-            continue
-          }
-          considered.add(word.term)
-          if osa_distance(query, word.chars, cutoff) is Some(distance) {
-            if verbosity != All && distance < cutoff {
-              suggestions.clear()
-              cutoff = distance
+    let prefix = String::from_array(
+      query[:Int::min(query.length(), self.prefix_length)],
+    )
+    let variants = [prefix]
+    let seen = @set.Set([prefix])
+    let mut start = 0
+    for depth = 0; depth <= cutoff; depth = depth + 1 {
+      let end = variants.length()
+      for i = start; i < end; i = i + 1 {
+        if self.deletes.get(variants[i]) is Some(bucket) {
+          for word in bucket {
+            if (query.length() - word.chars.length()).abs() > cutoff {
+              continue
             }
-            suggestions.push({ term: word.term, distance, count: word.count })
+            // The index only constrains prefixes. Reject incompatible suffix
+            // character sets before hashing or scoring a full-length word.
+            if use_character_filter() &&
+              (
+                query.length() > self.prefix_length ||
+                word.chars.length() > self.prefix_length
+              ) &&
+              (
+                (signature & word.signature.lnot()).popcnt() > cutoff ||
+                (word.signature & signature.lnot()).popcnt() > cutoff
+              ) {
+              continue
+            }
+            if !considered.add_and_check(word) {
+              continue
+            }
+            if osa_distance_with_workspace(query, word.chars, cutoff, workspace)
+              is Some(distance) {
+              if verbosity != All && distance < cutoff {
+                suggestions.clear()
+                cutoff = distance
+              }
+              let suggestion = { term: word.term, distance, count: word.count }
+              if verbosity == Top && !suggestions.is_empty() {
+                if compare_suggestions(suggestion, suggestions[0]) < 0 {
+                  suggestions[0] = suggestion
+                }
+              } else {
+                suggestions.push(suggestion)
+              }
+            }
           }
         }
       }
+      // Every edit <= cutoff has an intersection at a query deletion depth
+      // <= cutoff. Avoid constructing deeper layers after a closer match.
+      if depth >= cutoff {
+        break
+      }
+      append_deletion_layer(variants, seen, start, end)
+      start = end
+      if start == variants.length() {
+        break
+      }
     }
   }
-  suggestions.sort_by(compare_suggestions)
-  if verbosity == Top {
-    suggestions.truncate(1)
+  if verbosity != Top {
+    suggestions.sort_by(compare_suggestions)
   }
   if suggestions.is_empty() && include_unknown {
     suggestions.push({ term, distance: limit + 1, count: 0L })
@@ -313,26 +415,43 @@ fn deletion_variants(
   let mut start = 0
   for _depth = 0; _depth < max_distance; _depth = _depth + 1 {
     let end = variants.length()
-    for i = start; i < end; i = i + 1 {
-      let candidate = variants[i].to_array()
-      for j = 0; j < candidate.length(); j = j + 1 {
-        let builder = StringBuilder::new()
-        for k = 0; k < candidate.length(); k = k + 1 {
-          if k != j {
-            builder.write_char(candidate[k])
-          }
-        }
-        let deleted = builder.to_string()
-        if !seen.contains(deleted) {
-          seen.add(deleted)
-          variants.push(deleted)
-        }
-      }
-    }
+    append_deletion_layer(variants, seen, start, end)
     start = end
     if start == variants.length() {
       break
     }
   }
   variants
+}
+
+///|
+/// Append one breadth-first layer. UTF-16 offsets advance by whole Unicode
+/// characters, so the slices cannot split a supplementary character. Copy two
+/// views instead of allocating a character array and rebuilding every character
+/// for every deletion. Consecutive equal characters yield the same deletion.
+fn append_deletion_layer(
+  variants : Array[String],
+  seen : @set.Set[String],
+  start : Int,
+  end : Int,
+) -> Unit {
+  for i = start; i < end; i = i + 1 {
+    let candidate = variants[i]
+    let mut offset = 0
+    let mut previous : Char? = None
+    for character in candidate {
+      let next = offset + (if character.to_int() > 0xFFFF { 2 } else { 1 })
+      if previous != Some(character) {
+        let builder = StringBuilder(size_hint=candidate.length())
+        builder.write_view(candidate[:offset])
+        builder.write_view(candidate[next:])
+        let deleted = builder.to_string()
+        if seen.add_and_check(deleted) {
+          variants.push(deleted)
+        }
+      }
+      previous = Some(character)
+      offset = next
+    }
+  }
 }
