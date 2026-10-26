@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.4.0 — 2026-10-26
 
 - Add reproducible release-mode benchmarks against a locked JavaScript SymSpell port.
 - Measure build, corpus ingestion, lookup modes, phrase APIs, snapshots, and peak RSS.
