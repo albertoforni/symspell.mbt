@@ -6,8 +6,19 @@ with cutoff-aware optimal string alignment distance and ranks them by frequency.
 
 The library depends only on `moonbitlang/core` and runs on native, JavaScript,
 WebAssembly, and WebAssembly GC. There are no C bindings or runtime dictionary
-downloads. The module name is `albertoforni/symspell`; version 0.3.0 is currently
-a local project and has not been published to Mooncakes.
+downloads. The module name is `albertoforni/symspell`.
+
+## Installation
+
+This checkout is prepared for its first Mooncakes publication. After publication,
+add the module from the root of your consuming project:
+
+```sh
+moon add albertoforni/symspell
+```
+
+Import the library in the consuming package's `moon.pkg` as shown in
+[Basic usage](#basic-usage).
 
 ## Run the example
 
