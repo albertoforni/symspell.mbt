@@ -124,6 +124,68 @@ Speedup is JavaScript baseline time divided by MoonBit time: values above 1
 favor MoonBit. Use measurements for your own dictionary and query distribution
 when making a deployment decision.
 
+Exact reproduction of the recorded workload and timing windows:
+
+```sh
+python scripts/benchmark.py --words 10000 --queries 512 --samples 5 --cpu 0 --output benchmarks/.cache/10000.json
+python scripts/benchmark.py --words 0 --queries 512 --samples 5 --cpu 0 --output benchmarks/.cache/full.json
+```
+
+### 27 October 2026
+
+Measured with SymSpell 0.4.1 (commit `2656c2b`) and MoonBit 0.10.17 (moon 0.1.20261023) on the same Intel Core i9-12900H, Linux, and Node.js v26.10.0. Both sizes use five independent processes per engine, a 250 ms minimum warmup, a 500 ms minimum sample, and CPU affinity 0. All tested word and phrase outputs agree across engines, allowing the documented lexical ties.
+
+Native wins dictionary loading, corpus ingestion, and all three typo modes at both sizes, and Miss Top at 10,000 words; it ties Miss Top on the full dictionary. MoonBit JS wins Top, Closest, and Miss lookups at 10,000 words only. The JavaScript baseline still leads exact matches and the phrase APIs on both MoonBit targets. These are measured medians for the specified synthetic workload.
+
+The workload, drivers, and lookup code match 17 October; 0.4.1 only addressed toolchain deprecations, and the main change is the compiler (moonc v0.10.4 to v0.10.17). Comparing each run's fastest process sample, which background load affects least, native operations took 16–20% less time on geometric average per dictionary size and MoonBit JS operations 7–10% less, while the unchanged node-symspell baseline took 3–7% less. Snapshot save and restore took 13–29% less time natively and 14–44% less on MoonBit JS. The 17 October full-dictionary run had unusually wide sample ranges, with the slowest baseline sample up to 3.3× the fastest for the same operation, which inflated several of its medians; keep that in mind when comparing full-dictionary ratios across dates.
+
+#### 10,000 words
+
+| Operation | node-symspell | MoonBit JS | MoonBit native |
+| --- | ---: | ---: | ---: |
+| Build dictionary | 74.06 ms | 145.52 ms (0.51×) | 71.00 ms (1.04×) |
+| Build from corpus | 27.50 ms | 51.44 ms (0.53×) | 25.82 ms (1.07×) |
+| Exact Top | 0.027 µs | 0.042 µs (0.65×) | 0.060 µs (0.45×) |
+| Typo Top | 3.410 µs | 2.799 µs (1.22×) | 2.157 µs (1.58×) |
+| Typo Closest | 3.547 µs | 3.084 µs (1.15×) | 2.146 µs (1.65×) |
+| Typo All | 16.944 µs | 20.409 µs (0.83×) | 13.543 µs (1.25×) |
+| Miss Top | 4.188 µs | 3.581 µs (1.17×) | 3.715 µs (1.13×) |
+| Compound correction | 66.696 µs | 102.505 µs (0.65×) | 79.226 µs (0.84×) |
+| Segmentation | 687.641 µs | 1.01 ms (0.68×) | 790.139 µs (0.87×) |
+| Save snapshot | — | 193.00 ms | 61.00 ms |
+| Restore snapshot | — | 128.02 ms | 41.01 ms |
+
+Parentheses give speed relative to node-symspell; above 1× favors MoonBit. Snapshot times have no JavaScript comparator. The raw report includes all process samples and their ranges.
+
+#### 82,769 words
+
+| Operation | node-symspell | MoonBit JS | MoonBit native |
+| --- | ---: | ---: | ---: |
+| Build dictionary | 967.83 ms | 1.294 s (0.75×) | 810.06 ms (1.19×) |
+| Build from corpus | 30.02 ms | 44.09 ms (0.68×) | 26.57 ms (1.13×) |
+| Exact Top | 0.029 µs | 0.059 µs (0.48×) | 0.065 µs (0.44×) |
+| Typo Top | 4.958 µs | 5.571 µs (0.89×) | 3.334 µs (1.49×) |
+| Typo Closest | 4.968 µs | 5.697 µs (0.87×) | 3.347 µs (1.48×) |
+| Typo All | 37.845 µs | 66.738 µs (0.57×) | 33.429 µs (1.13×) |
+| Miss Top | 4.095 µs | 4.643 µs (0.88×) | 4.118 µs (0.99×) |
+| Compound correction | 105.608 µs | 245.121 µs (0.43×) | 141.508 µs (0.75×) |
+| Segmentation | 1.38 ms | 2.79 ms (0.49×) | 1.59 ms (0.86×) |
+| Save snapshot | — | 1.806 s | 659.66 ms |
+| Restore snapshot | — | 927.55 ms | 336.96 ms |
+
+Parentheses give speed relative to node-symspell; above 1× favors MoonBit. Snapshot times have no JavaScript comparator. The raw report includes all process samples and their ranges.
+
+#### Peak process RSS
+
+| Dictionary | node-symspell | MoonBit JS | MoonBit native |
+| --- | ---: | ---: | ---: |
+| 10,000 words | 130.2 MiB | 163.6 MiB | 44.6 MiB |
+| 82,769 words | 360.1 MiB | 372.3 MiB | 166.9 MiB |
+
+These are fresh dictionary-process high-water marks, including the runtime and workload input. The 10,000-word snapshot is 2.44 MiB; the full snapshot is 17.89 MiB.
+
+[10,000-word data](results/2026-10-27-10000.json) · [Full-dictionary data](results/2026-10-27-full.json) · [Interactive comparison](results/2026-10-27-comparison.html)
+
 ### 17 October 2026
 
 Measured on an Intel Core i9-12900H, Linux, Node.js v26.10.0, and the MoonBit toolchain recorded in the JSON reports. Both sizes use five independent processes per engine, a 250 ms minimum warmup, a 500 ms minimum sample, and CPU affinity 0. All tested word and phrase outputs agree across engines, allowing the documented lexical ties.
@@ -180,10 +242,3 @@ These are fresh dictionary-process high-water marks, including the runtime and w
 The [original 10,000-word report](results/2026-10-17-before-10000.json) uses the same workload hash and corpus-builder commit `fd9367c`. Top lookup originally ran at 0.24× the JavaScript baseline on MoonBit JS and 0.24× natively. The optimized ratios are 1.14× and 1.39×. The reports preserve each run’s comparator and source hashes; the original run did not record RSS.
 
 [Optimized 10,000-word data](results/2026-10-17-after-10000.json) · [Full-dictionary data](results/2026-10-17-after-full.json) · [Interactive comparison](results/2026-10-17-comparison.html)
-
-Exact reproduction of the recorded workload and timing windows:
-
-```sh
-python scripts/benchmark.py --words 10000 --queries 512 --samples 5 --cpu 0 --output benchmarks/.cache/10000.json
-python scripts/benchmark.py --words 0 --queries 512 --samples 5 --cpu 0 --output benchmarks/.cache/full.json
-```
