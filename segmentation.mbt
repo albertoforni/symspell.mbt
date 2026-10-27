@@ -4,7 +4,7 @@
 pub(all) struct Composition {
   segmented_string : String
   corrected_string : String
-  distance_sum : Int
+  distance_sum : Int32
   log_prob_sum : Double
 } derive(Eq, Debug)
 
@@ -18,9 +18,9 @@ priv struct SegmentationPath {
 
 ///|
 priv struct SegmentationState {
-  end_position : Int
+  end_position : Int32
   path : SegmentationPath?
-  distance : Int
+  distance : Int32
   probability : Double
   separator_present : Bool
 }
@@ -36,8 +36,8 @@ priv struct SegmentationState {
 pub fn SymSpell::word_segmentation(
   self : SymSpell,
   phrase : String,
-  max_edit_distance? : Int,
-  max_segmentation_word_length? : Int,
+  max_edit_distance? : Int32,
+  max_segmentation_word_length? : Int32,
 ) -> Composition raise SymSpellError {
   let limit = self.resolve_edit_distance(max_edit_distance)
   if max_segmentation_word_length is Some(length) && length <= 0 {
@@ -73,11 +73,11 @@ pub fn SymSpell::word_segmentation(
       log_prob_sum: self.unknown_log_probability(chars.length()),
     }
   }
-  let bounded_window = Int::min(window, chars.length())
+  let bounded_window = Int32::min(window, chars.length())
   // A normalized span of W non-space characters contains at most W spaces.
   // Bound the circular buffer without overflowing for very large windows.
   let size = bounded_window +
-    Int::min(bounded_window, chars.length() - bounded_window)
+    Int32::min(bounded_window, chars.length() - bounded_window)
   let states : Array[SegmentationState?] = Array::make(size, None)
   let mut index = -1
   for start = 0; start < chars.length(); start = start + 1 {
@@ -117,7 +117,7 @@ pub fn SymSpell::word_segmentation(
         })
       }
     }
-    let maximum = Int::min(chars.length() - start, size)
+    let maximum = Int32::min(chars.length() - start, size)
     let mut non_spaces = 0
     for length = 1; length <= maximum; length = length + 1 {
       if !chars[start + length - 1].is_whitespace() {
@@ -132,7 +132,7 @@ pub fn SymSpell::word_segmentation(
       } else {
         1
       }
-      let builder = StringBuilder::new()
+      let builder = StringBuilder()
       let mut removed_spaces = 0
       let offset = if leading_space { start + 1 } else { start }
       for position = offset; position < start + length; position = position + 1 {
@@ -211,8 +211,8 @@ pub fn SymSpell::word_segmentation(
     pieces.push(piece)
     path = piece.previous
   }
-  let segmented = StringBuilder::new()
-  let corrected = StringBuilder::new()
+  let segmented = StringBuilder()
+  let corrected = StringBuilder()
   for i = pieces.length() - 1; i >= 0; i = i - 1 {
     let piece = pieces[i]
     if piece.separator {
@@ -239,7 +239,7 @@ fn attaches_to_previous(term : String) -> Bool {
 
 ///|
 fn normalize_whitespace(text : String) -> String {
-  let builder = StringBuilder::new()
+  let builder = StringBuilder()
   let mut separator = false
   for character in text {
     if character.is_whitespace() {

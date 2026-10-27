@@ -1,7 +1,7 @@
 ///|
 // Independent full-matrix OSA oracle: no affix trimming, cutoff band, or reused
 // buffers. Deliberately keep the reference simple for the optimized kernel.
-fn reference_osa(a : Array[Char], b : Array[Char]) -> Int {
+fn reference_osa(a : Array[Char], b : Array[Char]) -> Int32 {
   let matrix = Array::makei(a.length() + 1, _ => Array::make(b.length() + 1, 0))
   for i = 0; i <= a.length(); i = i + 1 {
     matrix[i][0] = i
@@ -12,12 +12,12 @@ fn reference_osa(a : Array[Char], b : Array[Char]) -> Int {
   for i = 1; i <= a.length(); i = i + 1 {
     for j = 1; j <= b.length(); j = j + 1 {
       let cost = if a[i - 1] == b[j - 1] { 0 } else { 1 }
-      let mut value = Int::min(
+      let mut value = Int32::min(
         matrix[i - 1][j - 1] + cost,
-        Int::min(matrix[i - 1][j] + 1, matrix[i][j - 1] + 1),
+        Int32::min(matrix[i - 1][j] + 1, matrix[i][j - 1] + 1),
       )
       if i > 1 && j > 1 && a[i - 1] == b[j - 2] && a[i - 2] == b[j - 1] {
-        value = Int::min(value, matrix[i - 2][j - 2] + 1)
+        value = Int32::min(value, matrix[i - 2][j - 2] + 1)
       }
       matrix[i][j] = value
     }

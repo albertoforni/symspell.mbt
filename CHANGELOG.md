@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.4.1 — 2026-10-27
+
+- Build without warnings on MoonBit 0.10.17 (moon 0.1.20261023).
+- Keep `equal` as a method; deprecate the `not_equal` and `to_repr` methods.
+- Replace deprecated `StringBuilder::new()` and `hash_combine` calls.
+- Apply the current formatter; the interface now spells `Int` as `Int32`.
+- Point the installation docs at the published Mooncakes package.
+
 ## 0.4.0 — 2026-10-26
 
 - Add reproducible release-mode benchmarks against a locked JavaScript SymSpell port.

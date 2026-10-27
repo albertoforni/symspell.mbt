@@ -22,7 +22,7 @@ test "banded distance matches the exhaustive Unicode reference matrix" {
     "😀😀ba", "😀😀bb", "😀😀b😀", "😀😀😀a", "😀😀😀b",
     "😀😀😀😀",
   ]
-  let distances : Array[Int] = [
+  let distances : Array[Int32] = [
     0, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
     3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4,
     4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4,

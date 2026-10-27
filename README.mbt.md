@@ -10,8 +10,8 @@ downloads. The module name is `albertoforni/symspell`.
 
 ## Installation
 
-This checkout is prepared for its first Mooncakes publication. After publication,
-add the module from the root of your consuming project:
+The module is published on [Mooncakes](https://mooncakes.io/docs/albertoforni/symspell).
+Add it from the root of your consuming project:
 
 ```sh
 moon add albertoforni/symspell
@@ -40,7 +40,7 @@ plain text. It runs with
 
 Import the library from a consuming package:
 
-```moonbit nocheck
+```text
 import {
   "albertoforni/symspell",
 }
@@ -205,7 +205,7 @@ or fetching handled by the application, just like `load_dictionary()`.
 test {
   let dictionary = @symspell.SymSpell::new(corpus_size=3L)
   let report = dictionary.create_dictionary("hello, world! hello")
-  assert_eq(report, { parsed_tokens: 3, added_words: 2 })
+  assert_eq(report, { parsed_tokens: 3, added_words: 2, })
   assert_eq(dictionary.frequency("hello"), Some(2L))
   assert_eq(dictionary.lookup("helo", verbosity=Top)[0].term, "hello")
 }

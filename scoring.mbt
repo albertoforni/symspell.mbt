@@ -12,7 +12,7 @@ fn probability_count(value : Double) -> Int64 {
 
 ///|
 /// Upstream's unknown-word prior, 10 / 10^length, rounded down to a frequency.
-fn unknown_frequency(length : Int) -> Int64 {
+fn unknown_frequency(length : Int32) -> Int64 {
   if length == 0 {
     10L
   } else if length == 1 {
@@ -43,6 +43,6 @@ fn SymSpell::word_log_probability(self : SymSpell, count : Int64) -> Double {
 
 ///|
 /// Compute the unknown prior in log space to avoid underflow for long words.
-fn SymSpell::unknown_log_probability(self : SymSpell, length : Int) -> Double {
+fn SymSpell::unknown_log_probability(self : SymSpell, length : Int32) -> Double {
   1.0 - @math.log10(self.corpus_size.to_double()) - length.to_double()
 }

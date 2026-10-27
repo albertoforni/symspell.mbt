@@ -7,7 +7,7 @@
 pub fn SymSpell::lookup_compound(
   self : SymSpell,
   phrase : String,
-  max_edit_distance? : Int,
+  max_edit_distance? : Int32,
 ) -> Array[Suggestion] raise SymSpellError {
   let limit = self.resolve_edit_distance(max_edit_distance)
   let terms = split_whitespace(phrase)
@@ -106,7 +106,7 @@ pub fn SymSpell::lookup_compound(
         None => self.estimated_bigram_count(first.count, second.count)
       }
       if best_split is None || (best_split is Some(best) && count > best.count) {
-        best_split = Some({ term: correction, distance, count })
+        best_split = Some({ term: correction, distance, count, })
       }
     }
     parts.push(
@@ -117,7 +117,7 @@ pub fn SymSpell::lookup_compound(
       }),
     )
   }
-  let builder = StringBuilder::new()
+  let builder = StringBuilder()
   let mut count = self.corpus_size.to_double()
   for i = 0; i < parts.length(); i = i + 1 {
     if i > 0 {
@@ -132,7 +132,7 @@ pub fn SymSpell::lookup_compound(
   let distance = osa_distance(
     original,
     corrected,
-    Int::max(original.length(), corrected.length()),
+    Int32::max(original.length(), corrected.length()),
   ).unwrap()
-  [{ term: correction, distance, count: probability_count(count) }]
+  [{ term: correction, distance, count: probability_count(count), }]
 }

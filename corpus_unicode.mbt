@@ -5,7 +5,7 @@
 // Copyright © 1991-2026 Unicode, Inc. See UNICODE-LICENSE.txt.
 
 ///|
-let corpus_alphanumeric_ranges : ReadOnlyArray[(Int, Int)] = [
+let corpus_alphanumeric_ranges : ReadOnlyArray[(Int32, Int32)] = [
   (0xAA, 0xAA),
   (0xB2, 0xB3),
   (0xB5, 0xB5),

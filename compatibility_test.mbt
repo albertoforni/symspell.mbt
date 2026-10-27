@@ -77,7 +77,7 @@ test "reference lookup distance 0 prefix 1 threshold 0" {
     let (term, count) = entry
     let _ = dictionary.create_dictionary_entry(term, count)
   }
-  let cases : Array[(String, Int, Array[(String, Int, Int64)])] = [
+  let cases : Array[(String, Int32, Array[(String, Int32, Int64)])] = [
     ("", 0, [("", 0, 3L)]),
     ("a", 0, [("a", 0, 0L)]),
     ("b", 0, [("b", 0, 15L)]),
@@ -324,7 +324,7 @@ test "reference lookup distance 0 prefix 1 threshold 10" {
     let (term, count) = entry
     let _ = dictionary.create_dictionary_entry(term, count)
   }
-  let cases : Array[(String, Int, Array[(String, Int, Int64)])] = [
+  let cases : Array[(String, Int32, Array[(String, Int32, Int64)])] = [
     ("", 0, []),
     ("a", 0, []),
     ("b", 0, [("b", 0, 15L)]),
@@ -567,7 +567,7 @@ test "reference lookup distance 0 prefix 7 threshold 0" {
     let (term, count) = entry
     let _ = dictionary.create_dictionary_entry(term, count)
   }
-  let cases : Array[(String, Int, Array[(String, Int, Int64)])] = [
+  let cases : Array[(String, Int32, Array[(String, Int32, Int64)])] = [
     ("", 0, [("", 0, 3L)]),
     ("a", 0, [("a", 0, 0L)]),
     ("b", 0, [("b", 0, 15L)]),
@@ -814,7 +814,7 @@ test "reference lookup distance 0 prefix 7 threshold 10" {
     let (term, count) = entry
     let _ = dictionary.create_dictionary_entry(term, count)
   }
-  let cases : Array[(String, Int, Array[(String, Int, Int64)])] = [
+  let cases : Array[(String, Int32, Array[(String, Int32, Int64)])] = [
     ("", 0, []),
     ("a", 0, []),
     ("b", 0, [("b", 0, 15L)]),
@@ -1057,7 +1057,7 @@ test "reference lookup distance 1 prefix 2 threshold 0" {
     let (term, count) = entry
     let _ = dictionary.create_dictionary_entry(term, count)
   }
-  let cases : Array[(String, Int, Array[(String, Int, Int64)])] = [
+  let cases : Array[(String, Int32, Array[(String, Int32, Int64)])] = [
     ("", 0, [("", 0, 3L)]),
     (
       "",
@@ -1671,7 +1671,7 @@ test "reference lookup distance 1 prefix 2 threshold 10" {
     let (term, count) = entry
     let _ = dictionary.create_dictionary_entry(term, count)
   }
-  let cases : Array[(String, Int, Array[(String, Int, Int64)])] = [
+  let cases : Array[(String, Int32, Array[(String, Int32, Int64)])] = [
     ("", 0, []),
     ("", 1, [("b", 1, 15L)]),
     ("a", 0, []),
@@ -2123,7 +2123,7 @@ test "reference lookup distance 1 prefix 7 threshold 0" {
     let (term, count) = entry
     let _ = dictionary.create_dictionary_entry(term, count)
   }
-  let cases : Array[(String, Int, Array[(String, Int, Int64)])] = [
+  let cases : Array[(String, Int32, Array[(String, Int32, Int64)])] = [
     ("", 0, [("", 0, 3L)]),
     (
       "",
@@ -2737,7 +2737,7 @@ test "reference lookup distance 1 prefix 7 threshold 10" {
     let (term, count) = entry
     let _ = dictionary.create_dictionary_entry(term, count)
   }
-  let cases : Array[(String, Int, Array[(String, Int, Int64)])] = [
+  let cases : Array[(String, Int32, Array[(String, Int32, Int64)])] = [
     ("", 0, []),
     ("", 1, [("b", 1, 15L)]),
     ("a", 0, []),
@@ -3189,7 +3189,7 @@ test "reference lookup distance 2 prefix 3 threshold 0" {
     let (term, count) = entry
     let _ = dictionary.create_dictionary_entry(term, count)
   }
-  let cases : Array[(String, Int, Array[(String, Int, Int64)])] = [
+  let cases : Array[(String, Int32, Array[(String, Int32, Int64)])] = [
     ("", 0, [("", 0, 3L)]),
     (
       "",
@@ -4818,7 +4818,7 @@ test "reference lookup distance 2 prefix 3 threshold 10" {
     let (term, count) = entry
     let _ = dictionary.create_dictionary_entry(term, count)
   }
-  let cases : Array[(String, Int, Array[(String, Int, Int64)])] = [
+  let cases : Array[(String, Int32, Array[(String, Int32, Int64)])] = [
     ("", 0, []),
     ("", 1, [("b", 1, 15L)]),
     (
@@ -5969,7 +5969,7 @@ test "reference lookup distance 2 prefix 7 threshold 0" {
     let (term, count) = entry
     let _ = dictionary.create_dictionary_entry(term, count)
   }
-  let cases : Array[(String, Int, Array[(String, Int, Int64)])] = [
+  let cases : Array[(String, Int32, Array[(String, Int32, Int64)])] = [
     ("", 0, [("", 0, 3L)]),
     (
       "",
@@ -7598,7 +7598,7 @@ test "reference lookup distance 2 prefix 7 threshold 10" {
     let (term, count) = entry
     let _ = dictionary.create_dictionary_entry(term, count)
   }
-  let cases : Array[(String, Int, Array[(String, Int, Int64)])] = [
+  let cases : Array[(String, Int32, Array[(String, Int32, Int64)])] = [
     ("", 0, []),
     ("", 1, [("b", 1, 15L)]),
     (
@@ -8749,7 +8749,7 @@ test "reference lookup distance 3 prefix 4 threshold 0" {
     let (term, count) = entry
     let _ = dictionary.create_dictionary_entry(term, count)
   }
-  let cases : Array[(String, Int, Array[(String, Int, Int64)])] = [
+  let cases : Array[(String, Int32, Array[(String, Int32, Int64)])] = [
     ("", 0, [("", 0, 3L)]),
     (
       "",
@@ -12312,7 +12312,7 @@ test "reference lookup distance 3 prefix 4 threshold 10" {
     let (term, count) = entry
     let _ = dictionary.create_dictionary_entry(term, count)
   }
-  let cases : Array[(String, Int, Array[(String, Int, Int64)])] = [
+  let cases : Array[(String, Int32, Array[(String, Int32, Int64)])] = [
     ("", 0, []),
     ("", 1, [("b", 1, 15L)]),
     (
@@ -14800,7 +14800,7 @@ test "reference lookup distance 3 prefix 7 threshold 0" {
     let (term, count) = entry
     let _ = dictionary.create_dictionary_entry(term, count)
   }
-  let cases : Array[(String, Int, Array[(String, Int, Int64)])] = [
+  let cases : Array[(String, Int32, Array[(String, Int32, Int64)])] = [
     ("", 0, [("", 0, 3L)]),
     (
       "",
@@ -18363,7 +18363,7 @@ test "reference lookup distance 3 prefix 7 threshold 10" {
     let (term, count) = entry
     let _ = dictionary.create_dictionary_entry(term, count)
   }
-  let cases : Array[(String, Int, Array[(String, Int, Int64)])] = [
+  let cases : Array[(String, Int32, Array[(String, Int32, Int64)])] = [
     ("", 0, []),
     ("", 1, [("b", 1, 15L)]),
     (
@@ -20851,7 +20851,7 @@ test "reference lookup distance 4 prefix 5 threshold 0" {
     let (term, count) = entry
     let _ = dictionary.create_dictionary_entry(term, count)
   }
-  let cases : Array[(String, Int, Array[(String, Int, Int64)])] = [
+  let cases : Array[(String, Int32, Array[(String, Int32, Int64)])] = [
     ("", 0, [("", 0, 3L)]),
     (
       "",
@@ -27363,7 +27363,7 @@ test "reference lookup distance 4 prefix 5 threshold 10" {
     let (term, count) = entry
     let _ = dictionary.create_dictionary_entry(term, count)
   }
-  let cases : Array[(String, Int, Array[(String, Int, Int64)])] = [
+  let cases : Array[(String, Int32, Array[(String, Int32, Int64)])] = [
     ("", 0, []),
     ("", 1, [("b", 1, 15L)]),
     (
@@ -31831,7 +31831,7 @@ test "reference lookup distance 4 prefix 7 threshold 0" {
     let (term, count) = entry
     let _ = dictionary.create_dictionary_entry(term, count)
   }
-  let cases : Array[(String, Int, Array[(String, Int, Int64)])] = [
+  let cases : Array[(String, Int32, Array[(String, Int32, Int64)])] = [
     ("", 0, [("", 0, 3L)]),
     (
       "",
@@ -38343,7 +38343,7 @@ test "reference lookup distance 4 prefix 7 threshold 10" {
     let (term, count) = entry
     let _ = dictionary.create_dictionary_entry(term, count)
   }
-  let cases : Array[(String, Int, Array[(String, Int, Int64)])] = [
+  let cases : Array[(String, Int32, Array[(String, Int32, Int64)])] = [
     ("", 0, []),
     ("", 1, [("b", 1, 15L)]),
     (

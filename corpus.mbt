@@ -3,8 +3,8 @@
 /// counts every occurrence, including repetitions and below-threshold words.
 /// `added_words` counts terms newly admitted to the suggestion index.
 pub(all) struct CorpusReport {
-  parsed_tokens : Int
-  added_words : Int
+  parsed_tokens : Int32
+  added_words : Int32
 } derive(Eq, Debug)
 
 ///|
@@ -22,7 +22,7 @@ pub fn SymSpell::create_dictionary(
   self : SymSpell,
   text : String,
 ) -> CorpusReport {
-  let builder = StringBuilder::new()
+  let builder = StringBuilder()
   let mut parsed_tokens = 0
   let mut added_words = 0
   for character in text {
@@ -42,7 +42,7 @@ pub fn SymSpell::create_dictionary(
       added_words = added_words + 1
     }
   }
-  { parsed_tokens, added_words }
+  { parsed_tokens, added_words, }
 }
 
 ///|

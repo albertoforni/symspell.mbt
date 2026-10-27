@@ -2,7 +2,7 @@
 let snapshot_magic : Bytes = b"MBSSIDX\x00"
 
 ///|
-let snapshot_version : UInt = 1U
+let snapshot_version : UInt32 = 1U
 
 ///|
 /// Export settings, word counts, pending terms, bigrams, and the complete
@@ -19,7 +19,7 @@ pub fn SymSpell::to_snapshot(self : SymSpell) -> Bytes {
   buffer.write_int64_le(self.corpus_size)
   let words = self.words.values().to_array()
   words.sort_by((left, right) => left.term.lexical_compare(right.term))
-  let word_ids : Map[String, Int] = Map([])
+  let word_ids : Map[String, Int32] = Map([])
   buffer.write_int_le(words.length())
   for i = 0; i < words.length(); i = i + 1 {
     let word = words[i]
@@ -57,7 +57,7 @@ pub fn SymSpell::from_snapshot(data : Bytes) -> SymSpell raise SymSpellError {
     raise InvalidSnapshot(0, "snapshot is too short")
   }
   let end = data.length() - 4
-  let reader = SnapshotReader::{ data: data[:end], offset: 0 }
+  let reader = SnapshotReader::{ data: data[:end], offset: 0, }
   if !reader.take(8).equal_to_bytes(snapshot_magic) {
     raise InvalidSnapshot(0, "invalid snapshot magic")
   }
@@ -65,7 +65,7 @@ pub fn SymSpell::from_snapshot(data : Bytes) -> SymSpell raise SymSpellError {
   if version != snapshot_version {
     raise UnsupportedSnapshotVersion(version)
   }
-  let checksum_reader = SnapshotReader::{ data: data[end:], offset: 0 }
+  let checksum_reader = SnapshotReader::{ data: data[end:], offset: 0, }
   if checksum_reader.read_uint() != snapshot_crc32(data[:end]) {
     raise InvalidSnapshot(end, "checksum mismatch")
   }
@@ -106,7 +106,7 @@ pub fn SymSpell::from_snapshot(data : Bytes) -> SymSpell raise SymSpellError {
     }
     words.push(word)
     dictionary.words[term] = word
-    dictionary.max_word_length = Int::max(
+    dictionary.max_word_length = Int32::max(
       dictionary.max_word_length,
       chars.length(),
     )
@@ -220,13 +220,13 @@ fn write_snapshot_frequencies(
 ///|
 priv struct SnapshotReader {
   data : BytesView
-  mut offset : Int
+  mut offset : Int32
 }
 
 ///|
 fn SnapshotReader::take(
   self : SnapshotReader,
-  length : Int,
+  length : Int32,
 ) -> BytesView raise SymSpellError {
   if length < 0 || length > self.data.length() - self.offset {
     raise InvalidSnapshot(self.offset, "truncated snapshot")
@@ -237,7 +237,9 @@ fn SnapshotReader::take(
 }
 
 ///|
-fn SnapshotReader::read_uint(self : SnapshotReader) -> UInt raise SymSpellError {
+fn SnapshotReader::read_uint(
+  self : SnapshotReader,
+) -> UInt32 raise SymSpellError {
   match self.take(4) {
     [u32le(value)] => value
     _ => raise InvalidSnapshot(self.offset, "truncated integer")
@@ -245,7 +247,9 @@ fn SnapshotReader::read_uint(self : SnapshotReader) -> UInt raise SymSpellError 
 }
 
 ///|
-fn SnapshotReader::read_size(self : SnapshotReader) -> Int raise SymSpellError {
+fn SnapshotReader::read_size(
+  self : SnapshotReader,
+) -> Int32 raise SymSpellError {
   let offset = self.offset
   let value = self.read_uint()
   if value > 2147483647U {
@@ -257,8 +261,8 @@ fn SnapshotReader::read_size(self : SnapshotReader) -> Int raise SymSpellError {
 ///|
 fn SnapshotReader::read_count(
   self : SnapshotReader,
-  minimum_size : Int,
-) -> Int raise SymSpellError {
+  minimum_size : Int32,
+) -> Int32 raise SymSpellError {
   let offset = self.offset
   let count = self.read_size()
   if count > (self.data.length() - self.offset) / minimum_size {
@@ -307,10 +311,10 @@ fn SnapshotReader::read_ordered_string(
 fn valid_snapshot_deletion(
   key : Array[Char],
   word : Array[Char],
-  prefix_length : Int,
-  max_distance : Int,
+  prefix_length : Int32,
+  max_distance : Int32,
 ) -> Bool {
-  let length = Int::min(word.length(), prefix_length)
+  let length = Int32::min(word.length(), prefix_length)
   if key.length() > length || length - key.length() > max_distance {
     return false
   }
@@ -333,12 +337,12 @@ fn valid_snapshot_deletion(
 /// arithmetic even for an excessive edit limit in a malformed snapshot.
 fn snapshot_variant_count_matches(
   chars : Array[Char],
-  prefix_length : Int,
-  max_distance : Int,
-  observed : Int,
+  prefix_length : Int32,
+  max_distance : Int32,
+  observed : Int32,
 ) -> Bool {
-  let length = Int::min(chars.length(), prefix_length)
-  let distance = Int::min(max_distance, length)
+  let length = Int32::min(chars.length(), prefix_length)
+  let distance = Int32::min(max_distance, length)
   if observed <= distance {
     return false
   }
@@ -347,14 +351,16 @@ fn snapshot_variant_count_matches(
   }
   let mut counts = Array::make(distance + 1, 0L)
   counts[0] = 1L
-  let history : Map[Char, (Int, Array[Int64])] = Map([])
+  let history : Map[Char, (Int32, Array[Int64])] = Map([])
   let mut total = 1L
   for i = 0; i < length; i = i + 1 {
     let character = chars[i]
     let previous = history.get(character)
     let current = Array::make(distance + 1, 0L)
     total = 0L
-    for deleted = 0; deleted <= Int::min(distance, i + 1); deleted = deleted + 1 {
+    for deleted = 0
+        deleted <= Int32::min(distance, i + 1)
+        deleted = deleted + 1 {
       let mut count = counts[deleted]
       if deleted > 0 {
         count = count + counts[deleted - 1]
@@ -378,7 +384,7 @@ fn snapshot_variant_count_matches(
 }
 
 ///|
-let snapshot_crc_table : FixedArray[UInt] = FixedArray::makei(256, index => {
+let snapshot_crc_table : FixedArray[UInt32] = FixedArray::makei(256, index => {
   let mut value = index.reinterpret_as_uint()
   for _i = 0; _i < 8; _i = _i + 1 {
     value = if (value & 1U) == 1U {
@@ -392,7 +398,7 @@ let snapshot_crc_table : FixedArray[UInt] = FixedArray::makei(256, index => {
 
 ///|
 /// CRC-32/ISO-HDLC (the checksum used by gzip), with initial/final inversion.
-fn snapshot_crc32(data : BytesView) -> UInt {
+fn snapshot_crc32(data : BytesView) -> UInt32 {
   let mut checksum = 0xFFFFFFFFU
   for byte in data {
     let index = ((checksum ^ byte.to_uint()) & 0xFFU).reinterpret_as_int()

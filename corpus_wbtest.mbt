@@ -6,7 +6,7 @@ test "Unicode corpus classification matches independent Unicode 16 totals over e
   let mut code_sum = 0L
   let mut square_sum = 0L
   for code = 0; code <= 0x10FFFF; code = code + 1 {
-    if code is (0xD800..=0xDFFF) {
+    if code is (0xD800..<=0xDFFF) {
       continue
     }
     if is_corpus_alphanumeric(code.unsafe_to_char()) {

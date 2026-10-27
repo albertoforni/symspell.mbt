@@ -161,9 +161,9 @@ test "snapshot restores shared word references and keeps dictionaries independen
   assert_eq(first.lookup("hat", verbosity=Top)[0].term, "bat")
   assert_true(first.create_dictionary_entry("cat", 99L))
   assert_eq(first.lookup("hat", verbosity=All), [
-    { term: "cat", distance: 1, count: 99L },
-    { term: "bat", distance: 1, count: 5L },
-    { term: "cut", distance: 2, count: 4L },
+    { term: "cat", distance: 1, count: 99L, },
+    { term: "bat", distance: 1, count: 5L, },
+    { term: "cut", distance: 2, count: 4L, },
   ])
   assert_true(first.delete_dictionary_entry("longest"))
   assert_eq(first.word_segmentation("catbat").corrected_string, "cat bat")

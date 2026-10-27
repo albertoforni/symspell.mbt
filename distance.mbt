@@ -2,7 +2,11 @@
 /// Banded optimal string alignment distance with common affixes trimmed.
 /// Return None as soon as the cutoff cannot be met. Space is linear in the
 /// shorter string; time is proportional to the longer string times the band.
-fn osa_distance(a : Array[Char], b : Array[Char], max_distance : Int) -> Int? {
+fn osa_distance(
+  a : Array[Char],
+  b : Array[Char],
+  max_distance : Int32,
+) -> Int32? {
   osa_distance_with_workspace(a, b, max_distance, OsaWorkspace::new())
 }
 
@@ -10,23 +14,23 @@ fn osa_distance(a : Array[Char], b : Array[Char], max_distance : Int) -> Int? {
 /// A lookup owns its workspace: buffers are shared between candidate checks,
 /// never between queries or mutable dictionaries.
 priv struct OsaWorkspace {
-  mut row0 : Array[Int]
-  mut row1 : Array[Int]
-  mut row2 : Array[Int]
+  mut row0 : Array[Int32]
+  mut row1 : Array[Int32]
+  mut row2 : Array[Int32]
 }
 
 ///|
 fn OsaWorkspace::new() -> OsaWorkspace {
-  { row0: [], row1: [], row2: [] }
+  { row0: [], row1: [], row2: [], }
 }
 
 ///|
 fn osa_distance_with_workspace(
   a : Array[Char],
   b : Array[Char],
-  max_distance : Int,
+  max_distance : Int32,
   workspace : OsaWorkspace,
-) -> Int? {
+) -> Int32? {
   let (left, right) = if a.length() <= b.length() { (a, b) } else { (b, a) }
   let mut columns = left.length()
   let mut rows = right.length()
@@ -45,7 +49,7 @@ fn osa_distance_with_workspace(
   }
   columns = columns - offset
   rows = rows - offset
-  let limit = Int::min(max_distance, rows)
+  let limit = Int32::min(max_distance, rows)
   if rows - columns > limit {
     return None
   }
@@ -85,15 +89,15 @@ fn osa_distance_with_workspace(
   let mut previous_previous = workspace.row0
   let mut previous = workspace.row1
   let mut current = workspace.row2
-  for j = 0; j <= Int::min(columns, limit); j = j + 1 {
+  for j = 0; j <= Int32::min(columns, limit); j = j + 1 {
     previous[j] = j
   }
   if limit < columns {
     previous[limit + 1] = infinity
   }
   for i = 1; i <= rows; i = i + 1 {
-    let start = Int::max(1, i - limit)
-    let end = Int::min(columns, i + limit)
+    let start = Int32::max(1, i - limit)
+    let end = Int32::min(columns, i + limit)
     current[0] = if i <= limit { i } else { infinity }
     if start > 1 {
       current[start - 1] = infinity
@@ -108,18 +112,18 @@ fn osa_distance_with_workspace(
       } else {
         1
       }
-      let mut distance = Int::min(
+      let mut distance = Int32::min(
         previous[j - 1] + cost,
-        Int::min(previous[j] + 1, current[j - 1] + 1),
+        Int32::min(previous[j] + 1, current[j - 1] + 1),
       )
       if i > 1 &&
         j > 1 &&
         right[offset + i - 1] == left[offset + j - 2] &&
         right[offset + i - 2] == left[offset + j - 1] {
-        distance = Int::min(distance, previous_previous[j - 2] + 1)
+        distance = Int32::min(distance, previous_previous[j - 2] + 1)
       }
-      current[j] = Int::min(distance, infinity)
-      row_min = Int::min(row_min, current[j])
+      current[j] = Int32::min(distance, infinity)
+      row_min = Int32::min(row_min, current[j])
     }
     if row_min > limit {
       return None

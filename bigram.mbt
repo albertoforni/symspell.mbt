@@ -1,9 +1,9 @@
 ///|
 /// A summary of loading bigram frequencies. Blank lines are ignored.
 pub(all) struct BigramLoadReport {
-  parsed_entries : Int
-  added_bigrams : Int
-  skipped_lines : Int
+  parsed_entries : Int32
+  added_bigrams : Int32
+  skipped_lines : Int32
 } derive(Eq, Debug)
 
 ///|
@@ -33,7 +33,7 @@ pub fn SymSpell::bigram_frequency(self : SymSpell, term : String) -> Int64? {
 
 ///|
 /// Number of word pairs in the bigram dictionary.
-pub fn SymSpell::bigram_count(self : SymSpell) -> Int {
+pub fn SymSpell::bigram_count(self : SymSpell) -> Int32 {
   self.bigrams.length()
 }
 
@@ -58,10 +58,10 @@ pub fn SymSpell::delete_bigram_entry(self : SymSpell, term : String) -> Bool {
 pub fn SymSpell::load_bigram_dictionary(
   self : SymSpell,
   text : String,
-  term_index? : Int = 0,
-  count_index? : Int,
+  term_index~ : Int32 = 0,
+  count_index? : Int32,
   separator? : Char,
-  strict? : Bool = true,
+  strict~ : Bool = true,
 ) -> BigramLoadReport raise SymSpellError {
   let count_index = count_index.unwrap_or(if separator is None { 2 } else { 1 })
   let parsed = parse_frequency_rows(

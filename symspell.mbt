@@ -10,24 +10,24 @@ pub(all) enum Verbosity {
 /// A suggested term, its Unicode character edit distance, and its frequency.
 pub(all) struct Suggestion {
   term : String
-  distance : Int
+  distance : Int32
   count : Int64
 } derive(Eq, Debug)
 
 ///|
 /// Configuration, dictionary parsing, and snapshot errors.
 pub(all) suberror SymSpellError {
-  InvalidEditDistance(Int)
-  InvalidPrefixLength(Int)
+  InvalidEditDistance(Int32)
+  InvalidPrefixLength(Int32)
   InvalidCountThreshold(Int64)
-  InvalidColumns(Int, Int)
-  InvalidDictionaryLine(Int, String)
+  InvalidColumns(Int32, Int32)
+  InvalidDictionaryLine(Int32, String)
   InvalidCorpusSize(Int64)
   InvalidFrequencyCount(Int64)
   InvalidBigramTerm(String)
-  InvalidSegmentationWordLength(Int)
-  InvalidSnapshot(Int, String)
-  UnsupportedSnapshotVersion(UInt)
+  InvalidSegmentationWordLength(Int32)
+  InvalidSnapshot(Int32, String)
+  UnsupportedSnapshotVersion(UInt32)
 } derive(Eq, Debug)
 
 ///|
@@ -38,8 +38,8 @@ let max_frequency : Int64 = 9223372036854775807L
 struct Word {
   term : String
   chars : Array[Char]
-  term_hash : Int
-  signature : UInt
+  term_hash : Int32
+  signature : UInt32
   mut count : Int64
 }
 
@@ -52,7 +52,7 @@ impl Eq for Word with fn equal(self, other) {
 
 ///|
 impl Hash for Word with fn hash_combine(self, hasher) {
-  self.term.hash_combine(hasher)
+  hasher.combine(self.term)
 }
 
 ///|
@@ -64,7 +64,7 @@ impl Hash for Word with fn hash(self) {
 /// A missing bit needs at least one insertion/replacement (or deletion in the
 /// opposite direction). Collisions only weaken this lower bound, so the mask
 /// remains safe for every Unicode character, including supplementary ones.
-fn character_signature(chars : Array[Char]) -> UInt {
+fn character_signature(chars : Array[Char]) -> UInt32 {
   let mut signature = 0U
   for character in chars {
     signature = signature | (1U << (character.to_int() & 31))
@@ -97,10 +97,10 @@ pub struct SymSpell {
   priv bigrams : Map[String, Int64]
   priv mut bigram_count_min : Int64
   priv corpus_size : Int64
-  priv max_dictionary_edit_distance : Int
-  priv prefix_length : Int
+  priv max_dictionary_edit_distance : Int32
+  priv prefix_length : Int32
   priv count_threshold : Int64
-  priv mut max_word_length : Int
+  priv mut max_word_length : Int32
 }
 
 ///|
@@ -109,10 +109,10 @@ pub struct SymSpell {
 /// `corpus_size` must be positive and is used for phrase probability estimates;
 /// its default is the corpus frequency total used by upstream SymSpell.
 pub fn SymSpell::new(
-  max_dictionary_edit_distance? : Int = 2,
-  prefix_length? : Int = 7,
-  count_threshold? : Int64 = 1L,
-  corpus_size? : Int64 = 1024908267229L,
+  max_dictionary_edit_distance~ : Int32 = 2,
+  prefix_length~ : Int32 = 7,
+  count_threshold~ : Int64 = 1L,
+  corpus_size~ : Int64 = 1024908267229L,
 ) -> SymSpell raise SymSpellError {
   if max_dictionary_edit_distance < 0 {
     raise InvalidEditDistance(max_dictionary_edit_distance)
@@ -142,19 +142,19 @@ pub fn SymSpell::new(
 
 ///|
 /// Number of terms whose frequency has reached the configured threshold.
-pub fn SymSpell::word_count(self : SymSpell) -> Int {
+pub fn SymSpell::word_count(self : SymSpell) -> Int32 {
   self.words.length()
 }
 
 ///|
 /// Number of distinct deletion keys in the index.
-pub fn SymSpell::entry_count(self : SymSpell) -> Int {
+pub fn SymSpell::entry_count(self : SymSpell) -> Int32 {
   self.deletes.length()
 }
 
 ///|
 /// Number of terms still below the configured frequency threshold.
-pub fn SymSpell::pending_word_count(self : SymSpell) -> Int {
+pub fn SymSpell::pending_word_count(self : SymSpell) -> Int32 {
   self.pending.length()
 }
 
@@ -201,7 +201,7 @@ pub fn SymSpell::create_dictionary_entry(
     count,
   }
   self.words[term] = word
-  self.max_word_length = Int::max(self.max_word_length, chars.length())
+  self.max_word_length = Int32::max(self.max_word_length, chars.length())
   for
     key in deletion_variants(
       chars,
@@ -249,7 +249,7 @@ pub fn SymSpell::delete_dictionary_entry(
       if word.chars.length() == self.max_word_length {
         self.max_word_length = 0
         for entry in self.words.values() {
-          self.max_word_length = Int::max(
+          self.max_word_length = Int32::max(
             self.max_word_length,
             entry.chars.length(),
           )
@@ -270,15 +270,15 @@ pub fn SymSpell::delete_dictionary_entry(
 pub fn SymSpell::lookup(
   self : SymSpell,
   term : String,
-  verbosity? : Verbosity = Closest,
-  max_edit_distance? : Int,
-  include_unknown? : Bool = false,
+  verbosity~ : Verbosity = Closest,
+  max_edit_distance? : Int32,
+  include_unknown~ : Bool = false,
 ) -> Array[Suggestion] raise SymSpellError {
   let limit = self.resolve_edit_distance(max_edit_distance)
   let suggestions : Array[Suggestion] = []
   let exact = self.words.get(term)
   if exact is Some(word) {
-    suggestions.push({ term, distance: 0, count: word.count })
+    suggestions.push({ term, distance: 0, count: word.count, })
     if verbosity != All {
       return suggestions
     }
@@ -297,7 +297,7 @@ pub fn SymSpell::lookup(
     let workspace = OsaWorkspace::new()
     let mut cutoff = limit
     let prefix = String::from_array(
-      query[:Int::min(query.length(), self.prefix_length)],
+      query[:Int32::min(query.length(), self.prefix_length)],
     )
     let variants = [prefix]
     let seen = @set.Set([prefix])
@@ -332,7 +332,7 @@ pub fn SymSpell::lookup(
                 suggestions.clear()
                 cutoff = distance
               }
-              let suggestion = { term: word.term, distance, count: word.count }
+              let suggestion = { term: word.term, distance, count: word.count, }
               if verbosity == Top && !suggestions.is_empty() {
                 if compare_suggestions(suggestion, suggestions[0]) < 0 {
                   suggestions[0] = suggestion
@@ -360,7 +360,7 @@ pub fn SymSpell::lookup(
     suggestions.sort_by(compare_suggestions)
   }
   if suggestions.is_empty() && include_unknown {
-    suggestions.push({ term, distance: limit + 1, count: 0L })
+    suggestions.push({ term, distance: limit + 1, count: 0L, })
   }
   suggestions
 }
@@ -368,8 +368,8 @@ pub fn SymSpell::lookup(
 ///|
 fn SymSpell::resolve_edit_distance(
   self : SymSpell,
-  requested : Int?,
-) -> Int raise SymSpellError {
+  requested : Int32?,
+) -> Int32 raise SymSpellError {
   let limit = requested.unwrap_or(self.max_dictionary_edit_distance)
   if limit < 0 || limit > self.max_dictionary_edit_distance {
     raise InvalidEditDistance(limit)
@@ -378,7 +378,7 @@ fn SymSpell::resolve_edit_distance(
 }
 
 ///|
-fn compare_suggestions(left : Suggestion, right : Suggestion) -> Int {
+fn compare_suggestions(left : Suggestion, right : Suggestion) -> Int32 {
   let distance = left.distance.compare(right.distance)
   if distance != 0 {
     return distance
@@ -404,11 +404,11 @@ fn add_frequency(left : Int64, right : Int64) -> Int64 {
 /// order. Include the unchanged prefix so insertions and deletions can meet.
 fn deletion_variants(
   chars : Array[Char],
-  prefix_length : Int,
-  max_distance : Int,
+  prefix_length : Int32,
+  max_distance : Int32,
 ) -> Array[String] {
   let prefix = String::from_array(
-    chars[:Int::min(chars.length(), prefix_length)],
+    chars[:Int32::min(chars.length(), prefix_length)],
   )
   let variants = [prefix]
   let seen = @set.Set([prefix])
@@ -432,8 +432,8 @@ fn deletion_variants(
 fn append_deletion_layer(
   variants : Array[String],
   seen : @set.Set[String],
-  start : Int,
-  end : Int,
+  start : Int32,
+  end : Int32,
 ) -> Unit {
   for i = start; i < end; i = i + 1 {
     let candidate = variants[i]

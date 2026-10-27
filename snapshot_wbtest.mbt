@@ -18,13 +18,13 @@ fn checked_test_snapshot(payload : Bytes) -> Bytes {
 ///|
 fn raw_test_snapshot(
   words : Array[(String, Int64)],
-  deletes : Array[(String, Array[Int])],
-  pending? : Array[(String, Int64)] = [],
-  bigrams? : Array[(String, Int64)] = [],
-  distance? : Int = 1,
-  prefix? : Int = 2,
-  threshold? : Int64 = 1L,
-  corpus? : Int64 = 10000L,
+  deletes : Array[(String, Array[Int32])],
+  pending~ : Array[(String, Int64)] = [],
+  bigrams~ : Array[(String, Int64)] = [],
+  distance~ : Int32 = 1,
+  prefix~ : Int32 = 2,
+  threshold~ : Int64 = 1L,
+  corpus~ : Int64 = 10000L,
 ) -> Bytes {
   let buffer = @buffer.Buffer()
   buffer.write_bytes(snapshot_magic[:])
@@ -54,7 +54,7 @@ fn raw_test_snapshot(
 }
 
 ///|
-fn replace_test_uint(data : Bytes, offset : Int, value : UInt) -> Bytes {
+fn replace_test_uint(data : Bytes, offset : Int32, value : UInt32) -> Bytes {
   let buffer = @buffer.Buffer()
   buffer.write_bytes(data[:offset])
   buffer.write_uint_le(value)
@@ -66,7 +66,7 @@ fn replace_test_uint(data : Bytes, offset : Int, value : UInt) -> Bytes {
 test "snapshot checksum matches standard CRC32 vectors" {
   assert_eq(snapshot_crc32(b""[:]), 0U)
   assert_eq(snapshot_crc32(b"123456789"[:]), 0xCBF43926U)
-  let bytes = Bytes::makei(256, Int::to_byte)
+  let bytes = Bytes::makei(256, Int32::to_byte)
   assert_eq(snapshot_crc32(bytes[:]), 0x29058C73U)
 }
 

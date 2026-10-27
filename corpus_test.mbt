@@ -4,7 +4,7 @@ test "plain text builds word frequencies and reports every occurrence" {
   let report = dictionary.create_dictionary(
     "abc abc-def abc_def abc'def abc qwe qwe1 1qwe q1we 1234 1234",
   )
-  assert_eq(report, { parsed_tokens: 13, added_words: 8 })
+  assert_eq(report, { parsed_tokens: 13, added_words: 8, })
   let expected = @symspell.SymSpell::new()
   let _ = expected.load_dictionary(
     "abc 4\ndef 2\nabc'def 1\nqwe 1\nqwe1 1\n1qwe 1\nq1we 1\n1234 2",
@@ -19,7 +19,7 @@ test "corpus building preserves spelling casing and normalization" {
   let report = dictionary.create_dictionary(
     "Hello hello HELLO CAFÉ café é e\u{0301}",
   )
-  assert_eq(report, { parsed_tokens: 7, added_words: 7 })
+  assert_eq(report, { parsed_tokens: 7, added_words: 7, })
   for word in ["Hello", "hello", "HELLO", "CAFÉ", "café", "é", "e"] {
     assert_eq(dictionary.frequency(word), Some(1L))
   }
@@ -38,7 +38,7 @@ test "corpus tokens include Unicode letters and numbers across planes" {
     "Ａ１",
   ]
   let report = dictionary.create_dictionary(words.join("\u{2003}"))
-  assert_eq(report, { parsed_tokens: 9, added_words: 9 })
+  assert_eq(report, { parsed_tokens: 9, added_words: 9, })
   for word in words {
     assert_eq(dictionary.frequency(word), Some(1L))
   }
@@ -51,7 +51,7 @@ test "corpus token categories are pinned to Unicode 16" {
   // U+1C89/U+1C8A are Cyrillic letters introduced in Unicode 16.0;
   // U+2EBF0 is the start of CJK Extension I, introduced in Unicode 15.1.
   let report = dictionary.create_dictionary("\u{1C89}\u{1C8A} \u{2EBF0}")
-  assert_eq(report, { parsed_tokens: 2, added_words: 2 })
+  assert_eq(report, { parsed_tokens: 2, added_words: 2, })
   assert_eq(dictionary.frequency("\u{1C89}\u{1C8A}"), Some(1L))
   assert_eq(dictionary.frequency("\u{2EBF0}"), Some(1L))
 }
@@ -63,7 +63,7 @@ test "apostrophes are retained inside at edges and on their own" {
     "don't", "rock’n’roll", "'quoted'", "dogs’", "'", "’’", "l’amour",
   ]
   let report = dictionary.create_dictionary(words.join(" "))
-  assert_eq(report, { parsed_tokens: 7, added_words: 7 })
+  assert_eq(report, { parsed_tokens: 7, added_words: 7, })
   for word in words {
     assert_eq(dictionary.frequency(word), Some(1L))
   }
@@ -79,7 +79,7 @@ test "punctuation controls marks and emoji separate corpus tokens" {
     "\u{FEFF}one,two.three!four?five-six_seven/eight\\nine\r\nten\t" +
     "eleven\u{00A0}twelve😀thirteen\u{0301}fourteen\u{200D}fifteen\u{0000}sixteen",
   )
-  assert_eq(report, { parsed_tokens: 16, added_words: 16 })
+  assert_eq(report, { parsed_tokens: 16, added_words: 16, })
   for
     word in [
       "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten",

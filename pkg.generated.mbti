@@ -9,82 +9,88 @@ import {
 
 // Errors
 pub(all) suberror SymSpellError {
-  InvalidEditDistance(Int)
-  InvalidPrefixLength(Int)
+  InvalidEditDistance(Int32)
+  InvalidPrefixLength(Int32)
   InvalidCountThreshold(Int64)
-  InvalidColumns(Int, Int)
-  InvalidDictionaryLine(Int, String)
+  InvalidColumns(Int32, Int32)
+  InvalidDictionaryLine(Int32, String)
   InvalidCorpusSize(Int64)
   InvalidFrequencyCount(Int64)
   InvalidBigramTerm(String)
-  InvalidSegmentationWordLength(Int)
-  InvalidSnapshot(Int, String)
-  UnsupportedSnapshotVersion(UInt)
+  InvalidSegmentationWordLength(Int32)
+  InvalidSnapshot(Int32, String)
+  UnsupportedSnapshotVersion(UInt32)
 } derive(Eq, @debug.Debug)
+pub fn SymSpellError::equal(Self, Self) -> Bool
 
 // Types and methods
 pub(all) struct BigramLoadReport {
-  parsed_entries : Int
-  added_bigrams : Int
-  skipped_lines : Int
+  parsed_entries : Int32
+  added_bigrams : Int32
+  skipped_lines : Int32
 } derive(Eq, @debug.Debug)
+pub fn BigramLoadReport::equal(Self, Self) -> Bool
 
 pub(all) struct Composition {
   segmented_string : String
   corrected_string : String
-  distance_sum : Int
+  distance_sum : Int32
   log_prob_sum : Double
 } derive(Eq, @debug.Debug)
+pub fn Composition::equal(Self, Self) -> Bool
 
 pub(all) struct CorpusReport {
-  parsed_tokens : Int
-  added_words : Int
+  parsed_tokens : Int32
+  added_words : Int32
 } derive(Eq, @debug.Debug)
+pub fn CorpusReport::equal(Self, Self) -> Bool
 
 pub(all) struct LoadReport {
-  parsed_entries : Int
-  added_words : Int
-  skipped_lines : Int
+  parsed_entries : Int32
+  added_words : Int32
+  skipped_lines : Int32
 } derive(Eq, @debug.Debug)
+pub fn LoadReport::equal(Self, Self) -> Bool
 
 pub(all) struct Suggestion {
   term : String
-  distance : Int
+  distance : Int32
   count : Int64
 } derive(Eq, @debug.Debug)
+pub fn Suggestion::equal(Self, Self) -> Bool
 
 pub struct SymSpell {
   // private fields
 }
-pub fn SymSpell::bigram_count(Self) -> Int
+pub fn SymSpell::bigram_count(Self) -> Int32
 pub fn SymSpell::bigram_frequency(Self, String) -> Int64?
 pub fn SymSpell::create_dictionary(Self, String) -> CorpusReport
 pub fn SymSpell::create_dictionary_entry(Self, String, Int64) -> Bool
 pub fn SymSpell::delete_bigram_entry(Self, String) -> Bool
 pub fn SymSpell::delete_dictionary_entry(Self, String) -> Bool
-pub fn SymSpell::entry_count(Self) -> Int
+pub fn SymSpell::entry_count(Self) -> Int32
 pub fn SymSpell::frequency(Self, String) -> Int64?
 pub fn SymSpell::from_snapshot(Bytes) -> Self raise SymSpellError
-pub fn SymSpell::load_bigram_dictionary(Self, String, term_index? : Int, count_index? : Int, separator? : Char, strict? : Bool) -> BigramLoadReport raise SymSpellError
-pub fn SymSpell::load_dictionary(Self, String, term_index? : Int, count_index? : Int, separator? : Char, strict? : Bool) -> LoadReport raise SymSpellError
-pub fn SymSpell::lookup(Self, String, verbosity? : Verbosity, max_edit_distance? : Int, include_unknown? : Bool) -> Array[Suggestion] raise SymSpellError
-pub fn SymSpell::lookup_compound(Self, String, max_edit_distance? : Int) -> Array[Suggestion] raise SymSpellError
-pub fn SymSpell::new(max_dictionary_edit_distance? : Int, prefix_length? : Int, count_threshold? : Int64, corpus_size? : Int64) -> Self raise SymSpellError
-pub fn SymSpell::pending_word_count(Self) -> Int
+pub fn SymSpell::load_bigram_dictionary(Self, String, term_index? : Int32, count_index? : Int32, separator? : Char, strict? : Bool) -> BigramLoadReport raise SymSpellError
+pub fn SymSpell::load_dictionary(Self, String, term_index? : Int32, count_index? : Int32, separator? : Char, strict? : Bool) -> LoadReport raise SymSpellError
+pub fn SymSpell::lookup(Self, String, verbosity? : Verbosity, max_edit_distance? : Int32, include_unknown? : Bool) -> Array[Suggestion] raise SymSpellError
+pub fn SymSpell::lookup_compound(Self, String, max_edit_distance? : Int32) -> Array[Suggestion] raise SymSpellError
+pub fn SymSpell::new(max_dictionary_edit_distance? : Int32, prefix_length? : Int32, count_threshold? : Int64, corpus_size? : Int64) -> Self raise SymSpellError
+pub fn SymSpell::pending_word_count(Self) -> Int32
 pub fn SymSpell::set_bigram_count(Self, String, Int64) -> Bool raise SymSpellError
 pub fn SymSpell::to_snapshot(Self) -> Bytes
-pub fn SymSpell::word_count(Self) -> Int
-pub fn SymSpell::word_segmentation(Self, String, max_edit_distance? : Int, max_segmentation_word_length? : Int) -> Composition raise SymSpellError
+pub fn SymSpell::word_count(Self) -> Int32
+pub fn SymSpell::word_segmentation(Self, String, max_edit_distance? : Int32, max_segmentation_word_length? : Int32) -> Composition raise SymSpellError
 
 pub(all) enum Verbosity {
   Top
   Closest
   All
 } derive(Eq, @debug.Debug)
+pub fn Verbosity::equal(Self, Self) -> Bool
 
 type Word
 
 // Type aliases
 
 // Traits
-

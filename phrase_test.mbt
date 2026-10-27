@@ -4,7 +4,7 @@ test "compound correction splits joined words with bigram scoring" {
   let _ = dictionary.load_dictionary("where 2\nis 2\nwhereas 2")
   assert_true(dictionary.set_bigram_count("where is", 10L))
   assert_eq(dictionary.lookup_compound("whereiz"), [
-    { term: "where is", distance: 2, count: 10L },
+    { term: "where is", distance: 2, count: 10L, },
   ])
   assert_eq(dictionary.lookup_compound("whereis")[0].term, "where is")
   assert_eq(
@@ -18,7 +18,7 @@ test "compound correction merges separated words and corrects independent typos"
   let dictionary = @symspell.SymSpell::new()
   let _ = dictionary.load_dictionary("steam 1\nmachine 1")
   assert_eq(dictionary.lookup_compound("ste am machie"), [
-    { term: "steam machine", distance: 2, count: 0L },
+    { term: "steam machine", distance: 2, count: 0L, },
   ])
   assert_eq(
     dictionary.lookup_compound("qwer erty ytui a")[0].term,
@@ -27,7 +27,7 @@ test "compound correction merges separated words and corrects independent typos"
   let corpus = @symspell.SymSpell::new(corpus_size=100L)
   let _ = corpus.load_dictionary("hello 50\nworld 20")
   assert_eq(corpus.lookup_compound("hello world"), [
-    { term: "hello world", distance: 0, count: 10L },
+    { term: "hello world", distance: 0, count: 10L, },
   ])
 }
 
@@ -57,10 +57,10 @@ test "compound correction uses Unicode characters and explicit casing" {
 test "empty and unknown compound input have a defined result" {
   let dictionary = @symspell.SymSpell::new(corpus_size=100L)
   assert_eq(dictionary.lookup_compound(""), [
-    { term: "", distance: 0, count: 100L },
+    { term: "", distance: 0, count: 100L, },
   ])
   assert_eq(dictionary.lookup_compound("hello world"), [
-    { term: "hello world", distance: 0, count: 0L },
+    { term: "hello world", distance: 0, count: 0L, },
   ])
   assert_eq(
     dictionary.lookup_compound("\t hello  world \n")[0].term,
@@ -157,7 +157,7 @@ test "bigram loading is transactional and supports delimited pairs" {
   let report = dictionary.load_bigram_dictionary(
     "\u{FEFF}where is 10\r\nhello world 20\nwhere is 30\n",
   )
-  assert_eq(report, { parsed_entries: 3, added_bigrams: 2, skipped_lines: 0 })
+  assert_eq(report, { parsed_entries: 3, added_bigrams: 2, skipped_lines: 0, })
   assert_eq(dictionary.bigram_frequency("where\u{2003}is"), Some(30L))
   assert_eq(dictionary.bigram_count(), 2)
   assert_true(
@@ -175,14 +175,14 @@ test "bigram loading is transactional and supports delimited pairs" {
     term_index=1,
     count_index=0,
   )
-  assert_eq(custom, { parsed_entries: 2, added_bigrams: 1, skipped_lines: 0 })
+  assert_eq(custom, { parsed_entries: 2, added_bigrams: 1, skipped_lines: 0, })
   assert_eq(dictionary.bigram_frequency("hello world"), Some(50L))
   let skipped = dictionary.load_bigram_dictionary(
     "bad\none$4\nx y$-1\na b c$8",
     separator='$',
     strict=false,
   )
-  assert_eq(skipped, { parsed_entries: 0, added_bigrams: 0, skipped_lines: 4 })
+  assert_eq(skipped, { parsed_entries: 0, added_bigrams: 0, skipped_lines: 4, })
   assert_true(dictionary.delete_bigram_entry("ice cream"))
   assert_false(dictionary.delete_bigram_entry("ice cream"))
   assert_false(dictionary.delete_bigram_entry("one"))

@@ -2,9 +2,9 @@
 /// A summary of loading a dictionary. Blank lines are ignored; `skipped_lines`
 /// counts malformed nonblank lines skipped when `strict=false`.
 pub(all) struct LoadReport {
-  parsed_entries : Int
-  added_words : Int
-  skipped_lines : Int
+  parsed_entries : Int32
+  added_words : Int32
+  skipped_lines : Int32
 } derive(Eq, Debug)
 
 ///|
@@ -17,10 +17,10 @@ pub(all) struct LoadReport {
 pub fn SymSpell::load_dictionary(
   self : SymSpell,
   text : String,
-  term_index? : Int = 0,
-  count_index? : Int = 1,
+  term_index~ : Int32 = 0,
+  count_index~ : Int32 = 1,
   separator? : Char,
-  strict? : Bool = true,
+  strict~ : Bool = true,
 ) -> LoadReport raise SymSpellError {
   let parsed = parse_frequency_rows(
     text,
@@ -47,14 +47,14 @@ pub fn SymSpell::load_dictionary(
 ///|
 priv struct ParsedFrequencyRows {
   entries : Array[(String, Int64)]
-  skipped_lines : Int
+  skipped_lines : Int32
 }
 
 ///|
 fn parse_frequency_rows(
   text : String,
-  term_index : Int,
-  count_index : Int,
+  term_index : Int32,
+  count_index : Int32,
   separator : Char?,
   strict : Bool,
   bigram~ : Bool,
@@ -81,7 +81,7 @@ fn parse_frequency_rows(
         line.split(character.to_string()).map(StringView::to_owned).to_array()
       None => split_whitespace(line)
     }
-    let parsed = if Int::max(term_index, count_index) < fields.length() {
+    let parsed = if Int32::max(term_index, count_index) < fields.length() {
       let count = try @string.parse_int64(fields[count_index][:]) catch {
         _ => None
       } noraise {
@@ -114,13 +114,13 @@ fn parse_frequency_rows(
       }
     }
   }
-  { entries, skipped_lines }
+  { entries, skipped_lines, }
 }
 
 ///|
 fn split_whitespace(text : String) -> Array[String] {
   let fields : Array[String] = []
-  let builder = StringBuilder::new()
+  let builder = StringBuilder()
   for character in text {
     if character.is_whitespace() {
       if !builder.is_empty() {

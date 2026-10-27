@@ -34,7 +34,7 @@ test "reference compound english distance 0 corpus 1024908267229 bigrams False" 
   let _ = dictionary.create_dictionary_entry("words", 643L)
   let _ = dictionary.create_dictionary_entry("members", 626L)
   let _ = dictionary.create_dictionary_entry("remember", 609L)
-  let fixtures : Array[(String, Int, String, Int, Int64)] = [
+  let fixtures : Array[(String, Int32, String, Int32, Int64)] = [
     ("", 0, "", 0, 1024908267229L),
     ("unknown", 0, "unknown", 0, 0L),
     ("a", 0, "a", 0, 1000L),
@@ -185,7 +185,7 @@ test "reference segmentation english distance 0 corpus 1024908267229" {
   let _ = dictionary.create_dictionary_entry("words", 643L)
   let _ = dictionary.create_dictionary_entry("members", 626L)
   let _ = dictionary.create_dictionary_entry("remember", 609L)
-  let fixtures : Array[(String, Int, Int, String, String, Int, Double)] = [
+  let fixtures : Array[(String, Int32, Int32, String, String, Int32, Double)] = [
     ("a", 0, 1, "a", "a", 0, -9.010684996),
     ("a", 0, 8, "a", "a", 0, -9.010684996),
     ("is", 0, 1, "i s", "i s", 3, -24.021369993),
@@ -554,7 +554,7 @@ test "reference compound english distance 0 corpus 1024908267229 bigrams True" {
   let _ = dictionary.set_bigram_count("where is", 300L)
   let _ = dictionary.set_bigram_count("hello world", 347L)
   let _ = dictionary.set_bigram_count("ice cream", 394L)
-  let fixtures : Array[(String, Int, String, Int, Int64)] = [
+  let fixtures : Array[(String, Int32, String, Int32, Int64)] = [
     ("", 0, "", 0, 1024908267229L),
     ("unknown", 0, "unknown", 0, 0L),
     ("a", 0, "a", 0, 1000L),
@@ -705,7 +705,7 @@ test "reference compound english distance 0 corpus 10000 bigrams False" {
   let _ = dictionary.create_dictionary_entry("words", 643L)
   let _ = dictionary.create_dictionary_entry("members", 626L)
   let _ = dictionary.create_dictionary_entry("remember", 609L)
-  let fixtures : Array[(String, Int, String, Int, Int64)] = [
+  let fixtures : Array[(String, Int32, String, Int32, Int64)] = [
     ("", 0, "", 0, 10000L),
     ("unknown", 0, "unknown", 0, 0L),
     ("a", 0, "a", 0, 1000L),
@@ -856,7 +856,7 @@ test "reference segmentation english distance 0 corpus 10000" {
   let _ = dictionary.create_dictionary_entry("words", 643L)
   let _ = dictionary.create_dictionary_entry("members", 626L)
   let _ = dictionary.create_dictionary_entry("remember", 609L)
-  let fixtures : Array[(String, Int, Int, String, String, Int, Double)] = [
+  let fixtures : Array[(String, Int32, Int32, String, String, Int32, Double)] = [
     ("a", 0, 1, "a", "a", 0, -1.000000000),
     ("a", 0, 8, "a", "a", 0, -1.000000000),
     ("is", 0, 1, "i s", "i s", 3, -8.000000000),
@@ -1225,7 +1225,7 @@ test "reference compound english distance 0 corpus 10000 bigrams True" {
   let _ = dictionary.set_bigram_count("where is", 300L)
   let _ = dictionary.set_bigram_count("hello world", 347L)
   let _ = dictionary.set_bigram_count("ice cream", 394L)
-  let fixtures : Array[(String, Int, String, Int, Int64)] = [
+  let fixtures : Array[(String, Int32, String, Int32, Int64)] = [
     ("", 0, "", 0, 10000L),
     ("unknown", 0, "unknown", 0, 0L),
     ("a", 0, "a", 0, 1000L),
@@ -1376,7 +1376,7 @@ test "reference compound english distance 1 corpus 1024908267229 bigrams False" 
   let _ = dictionary.create_dictionary_entry("words", 643L)
   let _ = dictionary.create_dictionary_entry("members", 626L)
   let _ = dictionary.create_dictionary_entry("remember", 609L)
-  let fixtures : Array[(String, Int, String, Int, Int64)] = [
+  let fixtures : Array[(String, Int32, String, Int32, Int64)] = [
     ("", 0, "", 0, 1024908267229L),
     ("", 1, "", 0, 1024908267229L),
     ("unknown", 0, "unknown", 0, 0L),
@@ -1634,7 +1634,7 @@ test "reference segmentation english distance 1 corpus 1024908267229" {
   let _ = dictionary.create_dictionary_entry("words", 643L)
   let _ = dictionary.create_dictionary_entry("members", 626L)
   let _ = dictionary.create_dictionary_entry("remember", 609L)
-  let fixtures : Array[(String, Int, Int, String, String, Int, Double)] = [
+  let fixtures : Array[(String, Int32, Int32, String, String, Int32, Double)] = [
     ("a", 0, 1, "a", "a", 0, -9.010684996),
     ("a", 0, 8, "a", "a", 0, -9.010684996),
     ("a", 1, 1, "a", "a", 0, -9.010684996),
@@ -2322,7 +2322,7 @@ test "reference compound english distance 1 corpus 1024908267229 bigrams True" {
   let _ = dictionary.set_bigram_count("where is", 300L)
   let _ = dictionary.set_bigram_count("hello world", 347L)
   let _ = dictionary.set_bigram_count("ice cream", 394L)
-  let fixtures : Array[(String, Int, String, Int, Int64)] = [
+  let fixtures : Array[(String, Int32, String, Int32, Int64)] = [
     ("", 0, "", 0, 1024908267229L),
     ("", 1, "", 0, 1024908267229L),
     ("unknown", 0, "unknown", 0, 0L),
@@ -2580,7 +2580,7 @@ test "reference compound english distance 1 corpus 10000 bigrams False" {
   let _ = dictionary.create_dictionary_entry("words", 643L)
   let _ = dictionary.create_dictionary_entry("members", 626L)
   let _ = dictionary.create_dictionary_entry("remember", 609L)
-  let fixtures : Array[(String, Int, String, Int, Int64)] = [
+  let fixtures : Array[(String, Int32, String, Int32, Int64)] = [
     ("", 0, "", 0, 10000L),
     ("", 1, "", 0, 10000L),
     ("unknown", 0, "unknown", 0, 0L),
@@ -2838,7 +2838,7 @@ test "reference segmentation english distance 1 corpus 10000" {
   let _ = dictionary.create_dictionary_entry("words", 643L)
   let _ = dictionary.create_dictionary_entry("members", 626L)
   let _ = dictionary.create_dictionary_entry("remember", 609L)
-  let fixtures : Array[(String, Int, Int, String, String, Int, Double)] = [
+  let fixtures : Array[(String, Int32, Int32, String, String, Int32, Double)] = [
     ("a", 0, 1, "a", "a", 0, -1.000000000),
     ("a", 0, 8, "a", "a", 0, -1.000000000),
     ("a", 1, 1, "a", "a", 0, -1.000000000),
@@ -3526,7 +3526,7 @@ test "reference compound english distance 1 corpus 10000 bigrams True" {
   let _ = dictionary.set_bigram_count("where is", 300L)
   let _ = dictionary.set_bigram_count("hello world", 347L)
   let _ = dictionary.set_bigram_count("ice cream", 394L)
-  let fixtures : Array[(String, Int, String, Int, Int64)] = [
+  let fixtures : Array[(String, Int32, String, Int32, Int64)] = [
     ("", 0, "", 0, 10000L),
     ("", 1, "", 0, 10000L),
     ("unknown", 0, "unknown", 0, 0L),
@@ -3784,7 +3784,7 @@ test "reference compound english distance 2 corpus 1024908267229 bigrams False" 
   let _ = dictionary.create_dictionary_entry("words", 643L)
   let _ = dictionary.create_dictionary_entry("members", 626L)
   let _ = dictionary.create_dictionary_entry("remember", 609L)
-  let fixtures : Array[(String, Int, String, Int, Int64)] = [
+  let fixtures : Array[(String, Int32, String, Int32, Int64)] = [
     ("", 0, "", 0, 1024908267229L),
     ("", 1, "", 0, 1024908267229L),
     ("", 2, "", 0, 1024908267229L),
@@ -4149,7 +4149,7 @@ test "reference segmentation english distance 2 corpus 1024908267229" {
   let _ = dictionary.create_dictionary_entry("words", 643L)
   let _ = dictionary.create_dictionary_entry("members", 626L)
   let _ = dictionary.create_dictionary_entry("remember", 609L)
-  let fixtures : Array[(String, Int, Int, String, String, Int, Double)] = [
+  let fixtures : Array[(String, Int32, Int32, String, String, Int32, Double)] = [
     ("a", 0, 1, "a", "a", 0, -9.010684996),
     ("a", 0, 8, "a", "a", 0, -9.010684996),
     ("a", 1, 1, "a", "a", 0, -9.010684996),
@@ -5156,7 +5156,7 @@ test "reference compound english distance 2 corpus 1024908267229 bigrams True" {
   let _ = dictionary.set_bigram_count("where is", 300L)
   let _ = dictionary.set_bigram_count("hello world", 347L)
   let _ = dictionary.set_bigram_count("ice cream", 394L)
-  let fixtures : Array[(String, Int, String, Int, Int64)] = [
+  let fixtures : Array[(String, Int32, String, Int32, Int64)] = [
     ("", 0, "", 0, 1024908267229L),
     ("", 1, "", 0, 1024908267229L),
     ("", 2, "", 0, 1024908267229L),
@@ -5521,7 +5521,7 @@ test "reference compound english distance 2 corpus 10000 bigrams False" {
   let _ = dictionary.create_dictionary_entry("words", 643L)
   let _ = dictionary.create_dictionary_entry("members", 626L)
   let _ = dictionary.create_dictionary_entry("remember", 609L)
-  let fixtures : Array[(String, Int, String, Int, Int64)] = [
+  let fixtures : Array[(String, Int32, String, Int32, Int64)] = [
     ("", 0, "", 0, 10000L),
     ("", 1, "", 0, 10000L),
     ("", 2, "", 0, 10000L),
@@ -5886,7 +5886,7 @@ test "reference segmentation english distance 2 corpus 10000" {
   let _ = dictionary.create_dictionary_entry("words", 643L)
   let _ = dictionary.create_dictionary_entry("members", 626L)
   let _ = dictionary.create_dictionary_entry("remember", 609L)
-  let fixtures : Array[(String, Int, Int, String, String, Int, Double)] = [
+  let fixtures : Array[(String, Int32, Int32, String, String, Int32, Double)] = [
     ("a", 0, 1, "a", "a", 0, -1.000000000),
     ("a", 0, 8, "a", "a", 0, -1.000000000),
     ("a", 1, 1, "a", "a", 0, -1.000000000),
@@ -6893,7 +6893,7 @@ test "reference compound english distance 2 corpus 10000 bigrams True" {
   let _ = dictionary.set_bigram_count("where is", 300L)
   let _ = dictionary.set_bigram_count("hello world", 347L)
   let _ = dictionary.set_bigram_count("ice cream", 394L)
-  let fixtures : Array[(String, Int, String, Int, Int64)] = [
+  let fixtures : Array[(String, Int32, String, Int32, Int64)] = [
     ("", 0, "", 0, 10000L),
     ("", 1, "", 0, 10000L),
     ("", 2, "", 0, 10000L),
@@ -7247,7 +7247,7 @@ test "reference compound unicode distance 0 corpus 1024908267229 bigrams False" 
   let _ = dictionary.create_dictionary_entry("abc", 830L)
   let _ = dictionary.create_dictionary_entry("!", 813L)
   let _ = dictionary.create_dictionary_entry("'s", 796L)
-  let fixtures : Array[(String, Int, String, Int, Int64)] = [
+  let fixtures : Array[(String, Int32, String, Int32, Int64)] = [
     ("", 0, "", 0, 1024908267229L),
     ("unknown", 0, "unknown", 0, 0L),
     ("東京", 0, "東京", 0, 1000L),
@@ -7370,7 +7370,7 @@ test "reference segmentation unicode distance 0 corpus 1024908267229" {
   let _ = dictionary.create_dictionary_entry("abc", 830L)
   let _ = dictionary.create_dictionary_entry("!", 813L)
   let _ = dictionary.create_dictionary_entry("'s", 796L)
-  let fixtures : Array[(String, Int, Int, String, String, Int, Double)] = [
+  let fixtures : Array[(String, Int32, Int32, String, String, Int32, Double)] = [
     ("東京", 0, 1, "東 京", "東 京", 3, -24.021369993),
     ("東京", 0, 4, "東京", "東京", 0, -9.010684996),
     ("大阪", 0, 1, "大 阪", "大 阪", 3, -24.021369993),
@@ -7592,7 +7592,7 @@ test "reference compound unicode distance 0 corpus 1024908267229 bigrams True" {
   let _ = dictionary.set_bigram_count("東京 旅行", 300L)
   let _ = dictionary.set_bigram_count("大阪 京都", 347L)
   let _ = dictionary.set_bigram_count("café été", 394L)
-  let fixtures : Array[(String, Int, String, Int, Int64)] = [
+  let fixtures : Array[(String, Int32, String, Int32, Int64)] = [
     ("", 0, "", 0, 1024908267229L),
     ("unknown", 0, "unknown", 0, 0L),
     ("東京", 0, "東京", 0, 1000L),
@@ -7715,7 +7715,7 @@ test "reference compound unicode distance 0 corpus 10000 bigrams False" {
   let _ = dictionary.create_dictionary_entry("abc", 830L)
   let _ = dictionary.create_dictionary_entry("!", 813L)
   let _ = dictionary.create_dictionary_entry("'s", 796L)
-  let fixtures : Array[(String, Int, String, Int, Int64)] = [
+  let fixtures : Array[(String, Int32, String, Int32, Int64)] = [
     ("", 0, "", 0, 10000L),
     ("unknown", 0, "unknown", 0, 0L),
     ("東京", 0, "東京", 0, 1000L),
@@ -7838,7 +7838,7 @@ test "reference segmentation unicode distance 0 corpus 10000" {
   let _ = dictionary.create_dictionary_entry("abc", 830L)
   let _ = dictionary.create_dictionary_entry("!", 813L)
   let _ = dictionary.create_dictionary_entry("'s", 796L)
-  let fixtures : Array[(String, Int, Int, String, String, Int, Double)] = [
+  let fixtures : Array[(String, Int32, Int32, String, String, Int32, Double)] = [
     ("東京", 0, 1, "東 京", "東 京", 3, -8.000000000),
     ("東京", 0, 4, "東京", "東京", 0, -1.000000000),
     ("大阪", 0, 1, "大 阪", "大 阪", 3, -8.000000000),
@@ -8054,7 +8054,7 @@ test "reference compound unicode distance 0 corpus 10000 bigrams True" {
   let _ = dictionary.set_bigram_count("東京 旅行", 300L)
   let _ = dictionary.set_bigram_count("大阪 京都", 347L)
   let _ = dictionary.set_bigram_count("café été", 394L)
-  let fixtures : Array[(String, Int, String, Int, Int64)] = [
+  let fixtures : Array[(String, Int32, String, Int32, Int64)] = [
     ("", 0, "", 0, 10000L),
     ("unknown", 0, "unknown", 0, 0L),
     ("東京", 0, "東京", 0, 1000L),
@@ -8177,7 +8177,7 @@ test "reference compound unicode distance 1 corpus 1024908267229 bigrams False" 
   let _ = dictionary.create_dictionary_entry("abc", 830L)
   let _ = dictionary.create_dictionary_entry("!", 813L)
   let _ = dictionary.create_dictionary_entry("'s", 796L)
-  let fixtures : Array[(String, Int, String, Int, Int64)] = [
+  let fixtures : Array[(String, Int32, String, Int32, Int64)] = [
     ("", 0, "", 0, 1024908267229L),
     ("", 1, "", 0, 1024908267229L),
     ("unknown", 0, "unknown", 0, 0L),
@@ -8390,7 +8390,7 @@ test "reference segmentation unicode distance 1 corpus 1024908267229" {
   let _ = dictionary.create_dictionary_entry("abc", 830L)
   let _ = dictionary.create_dictionary_entry("!", 813L)
   let _ = dictionary.create_dictionary_entry("'s", 796L)
-  let fixtures : Array[(String, Int, Int, String, String, Int, Double)] = [
+  let fixtures : Array[(String, Int32, Int32, String, String, Int32, Double)] = [
     ("東京", 0, 1, "東 京", "東 京", 3, -24.021369993),
     ("東京", 0, 4, "東京", "東京", 0, -9.010684996),
     ("東京", 1, 1, "東 京", "東京 東京", 3, -18.021369993),
@@ -8829,7 +8829,7 @@ test "reference compound unicode distance 1 corpus 1024908267229 bigrams True" {
   let _ = dictionary.set_bigram_count("東京 旅行", 300L)
   let _ = dictionary.set_bigram_count("大阪 京都", 347L)
   let _ = dictionary.set_bigram_count("café été", 394L)
-  let fixtures : Array[(String, Int, String, Int, Int64)] = [
+  let fixtures : Array[(String, Int32, String, Int32, Int64)] = [
     ("", 0, "", 0, 1024908267229L),
     ("", 1, "", 0, 1024908267229L),
     ("unknown", 0, "unknown", 0, 0L),
@@ -9042,7 +9042,7 @@ test "reference compound unicode distance 1 corpus 10000 bigrams False" {
   let _ = dictionary.create_dictionary_entry("abc", 830L)
   let _ = dictionary.create_dictionary_entry("!", 813L)
   let _ = dictionary.create_dictionary_entry("'s", 796L)
-  let fixtures : Array[(String, Int, String, Int, Int64)] = [
+  let fixtures : Array[(String, Int32, String, Int32, Int64)] = [
     ("", 0, "", 0, 10000L),
     ("", 1, "", 0, 10000L),
     ("unknown", 0, "unknown", 0, 0L),
@@ -9255,7 +9255,7 @@ test "reference segmentation unicode distance 1 corpus 10000" {
   let _ = dictionary.create_dictionary_entry("abc", 830L)
   let _ = dictionary.create_dictionary_entry("!", 813L)
   let _ = dictionary.create_dictionary_entry("'s", 796L)
-  let fixtures : Array[(String, Int, Int, String, String, Int, Double)] = [
+  let fixtures : Array[(String, Int32, Int32, String, String, Int32, Double)] = [
     ("東京", 0, 1, "東 京", "東 京", 3, -8.000000000),
     ("東京", 0, 4, "東京", "東京", 0, -1.000000000),
     ("東京", 1, 1, "東 京", "東京 東京", 3, -2.000000000),
@@ -9688,7 +9688,7 @@ test "reference compound unicode distance 1 corpus 10000 bigrams True" {
   let _ = dictionary.set_bigram_count("東京 旅行", 300L)
   let _ = dictionary.set_bigram_count("大阪 京都", 347L)
   let _ = dictionary.set_bigram_count("café été", 394L)
-  let fixtures : Array[(String, Int, String, Int, Int64)] = [
+  let fixtures : Array[(String, Int32, String, Int32, Int64)] = [
     ("", 0, "", 0, 10000L),
     ("", 1, "", 0, 10000L),
     ("unknown", 0, "unknown", 0, 0L),
@@ -9901,7 +9901,7 @@ test "reference compound unicode distance 2 corpus 1024908267229 bigrams False" 
   let _ = dictionary.create_dictionary_entry("abc", 830L)
   let _ = dictionary.create_dictionary_entry("!", 813L)
   let _ = dictionary.create_dictionary_entry("'s", 796L)
-  let fixtures : Array[(String, Int, String, Int, Int64)] = [
+  let fixtures : Array[(String, Int32, String, Int32, Int64)] = [
     ("", 0, "", 0, 1024908267229L),
     ("", 1, "", 0, 1024908267229L),
     ("", 2, "", 0, 1024908267229L),
@@ -10204,7 +10204,7 @@ test "reference segmentation unicode distance 2 corpus 1024908267229" {
   let _ = dictionary.create_dictionary_entry("abc", 830L)
   let _ = dictionary.create_dictionary_entry("!", 813L)
   let _ = dictionary.create_dictionary_entry("'s", 796L)
-  let fixtures : Array[(String, Int, Int, String, String, Int, Double)] = [
+  let fixtures : Array[(String, Int32, Int32, String, String, Int32, Double)] = [
     ("東京", 0, 1, "東 京", "東 京", 3, -24.021369993),
     ("東京", 0, 4, "東京", "東京", 0, -9.010684996),
     ("東京", 1, 1, "東 京", "東京 東京", 3, -18.021369993),
@@ -10859,7 +10859,7 @@ test "reference compound unicode distance 2 corpus 1024908267229 bigrams True" {
   let _ = dictionary.set_bigram_count("東京 旅行", 300L)
   let _ = dictionary.set_bigram_count("大阪 京都", 347L)
   let _ = dictionary.set_bigram_count("café été", 394L)
-  let fixtures : Array[(String, Int, String, Int, Int64)] = [
+  let fixtures : Array[(String, Int32, String, Int32, Int64)] = [
     ("", 0, "", 0, 1024908267229L),
     ("", 1, "", 0, 1024908267229L),
     ("", 2, "", 0, 1024908267229L),
@@ -11162,7 +11162,7 @@ test "reference compound unicode distance 2 corpus 10000 bigrams False" {
   let _ = dictionary.create_dictionary_entry("abc", 830L)
   let _ = dictionary.create_dictionary_entry("!", 813L)
   let _ = dictionary.create_dictionary_entry("'s", 796L)
-  let fixtures : Array[(String, Int, String, Int, Int64)] = [
+  let fixtures : Array[(String, Int32, String, Int32, Int64)] = [
     ("", 0, "", 0, 10000L),
     ("", 1, "", 0, 10000L),
     ("", 2, "", 0, 10000L),
@@ -11465,7 +11465,7 @@ test "reference segmentation unicode distance 2 corpus 10000" {
   let _ = dictionary.create_dictionary_entry("abc", 830L)
   let _ = dictionary.create_dictionary_entry("!", 813L)
   let _ = dictionary.create_dictionary_entry("'s", 796L)
-  let fixtures : Array[(String, Int, Int, String, String, Int, Double)] = [
+  let fixtures : Array[(String, Int32, Int32, String, String, Int32, Double)] = [
     ("東京", 0, 1, "東 京", "東 京", 3, -8.000000000),
     ("東京", 0, 4, "東京", "東京", 0, -1.000000000),
     ("東京", 1, 1, "東 京", "東京 東京", 3, -2.000000000),
@@ -12114,7 +12114,7 @@ test "reference compound unicode distance 2 corpus 10000 bigrams True" {
   let _ = dictionary.set_bigram_count("東京 旅行", 300L)
   let _ = dictionary.set_bigram_count("大阪 京都", 347L)
   let _ = dictionary.set_bigram_count("café été", 394L)
-  let fixtures : Array[(String, Int, String, Int, Int64)] = [
+  let fixtures : Array[(String, Int32, String, Int32, Int64)] = [
     ("", 0, "", 0, 10000L),
     ("", 1, "", 0, 10000L),
     ("", 2, "", 0, 10000L),

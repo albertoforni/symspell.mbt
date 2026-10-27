@@ -15,7 +15,7 @@ test "the documented upstream members example" {
   let dictionary = @symspell.SymSpell::new()
   assert_true(dictionary.create_dictionary_entry("members", 226656153L))
   assert_eq(dictionary.lookup("memebers"), [
-    { term: "members", distance: 1, count: 226656153L },
+    { term: "members", distance: 1, count: 226656153L, },
   ])
 }
 
@@ -24,22 +24,22 @@ test "distance wins over frequency, and verbosity controls the result set" {
   let dictionary = @symspell.SymSpell::new()
   let _ = dictionary.load_dictionary("cat 10\nbat 50\ncut 20\ndog 1000")
   assert_eq(dictionary.lookup("cat", verbosity=Top), [
-    { term: "cat", distance: 0, count: 10L },
+    { term: "cat", distance: 0, count: 10L, },
   ])
   assert_eq(dictionary.lookup("hat"), [
-    { term: "bat", distance: 1, count: 50L },
-    { term: "cat", distance: 1, count: 10L },
+    { term: "bat", distance: 1, count: 50L, },
+    { term: "cat", distance: 1, count: 10L, },
   ])
   assert_eq(dictionary.lookup("hat", verbosity=Top), [
-    { term: "bat", distance: 1, count: 50L },
+    { term: "bat", distance: 1, count: 50L, },
   ])
   assert_eq(dictionary.lookup("cat", verbosity=All), [
-    { term: "cat", distance: 0, count: 10L },
-    { term: "bat", distance: 1, count: 50L },
-    { term: "cut", distance: 1, count: 20L },
+    { term: "cat", distance: 0, count: 10L, },
+    { term: "bat", distance: 1, count: 50L, },
+    { term: "cut", distance: 1, count: 20L, },
   ])
   assert_eq(dictionary.lookup("cat", max_edit_distance=0), [
-    { term: "cat", distance: 0, count: 10L },
+    { term: "cat", distance: 0, count: 10L, },
   ])
   assert_eq(dictionary.lookup("hat", max_edit_distance=0), [])
 }
@@ -49,15 +49,15 @@ test "equal scores have deterministic term order" {
   let dictionary = @symspell.SymSpell::new()
   let _ = dictionary.load_dictionary("cat 50\nbat 50")
   assert_eq(dictionary.lookup("hat"), [
-    { term: "bat", distance: 1, count: 50L },
-    { term: "cat", distance: 1, count: 50L },
+    { term: "bat", distance: 1, count: 50L, },
+    { term: "cat", distance: 1, count: 50L, },
   ])
   assert_eq(dictionary.lookup("hat", verbosity=Top)[0].term, "bat")
   let different_lengths = @symspell.SymSpell::new()
   let _ = different_lengths.load_dictionary("ba 24\nabb 24")
   assert_eq(different_lengths.lookup("ab"), [
-    { term: "abb", distance: 1, count: 24L },
-    { term: "ba", distance: 1, count: 24L },
+    { term: "abb", distance: 1, count: 24L, },
+    { term: "ba", distance: 1, count: 24L, },
   ])
 }
 
@@ -66,7 +66,7 @@ test "adjacent transpositions use optimal string alignment" {
   let dictionary = @symspell.SymSpell::new()
   let _ = dictionary.create_dictionary_entry("bank", 10L)
   assert_eq(dictionary.lookup("bnak", max_edit_distance=1), [
-    { term: "bank", distance: 1, count: 10L },
+    { term: "bank", distance: 1, count: 10L, },
   ])
   assert_eq(dictionary.lookup("xban", max_edit_distance=1), [])
   assert_eq(dictionary.lookup("baxn", max_edit_distance=1), [])
@@ -117,7 +117,7 @@ test "normalization and casing are explicit application policies" {
   assert_eq(dictionary.lookup("É")[0].distance, 1)
   let _ = dictionary.create_dictionary_entry("👩‍💻", 2L)
   assert_eq(dictionary.lookup("", verbosity=All), [
-    { term: "é", distance: 1, count: 1L },
+    { term: "é", distance: 1, count: 1L, },
   ])
 }
 
@@ -129,17 +129,17 @@ test "short strings, empty terms, and candidates without a common character" {
   )
   let _ = dictionary.load_dictionary("bank 10\nbink 9")
   assert_eq(dictionary.lookup("knab", verbosity=All), [
-    { term: "bank", distance: 3, count: 10L },
-    { term: "bink", distance: 4, count: 9L },
+    { term: "bank", distance: 3, count: 10L, },
+    { term: "bink", distance: 4, count: 9L, },
   ])
   assert_eq(dictionary.lookup("", verbosity=All), [
-    { term: "bank", distance: 4, count: 10L },
-    { term: "bink", distance: 4, count: 9L },
+    { term: "bank", distance: 4, count: 10L, },
+    { term: "bink", distance: 4, count: 9L, },
   ])
   assert_true(dictionary.create_dictionary_entry("", 3L))
-  assert_eq(dictionary.lookup(""), [{ term: "", distance: 0, count: 3L }])
+  assert_eq(dictionary.lookup(""), [{ term: "", distance: 0, count: 3L, }])
   assert_eq(dictionary.lookup("x", max_edit_distance=1), [
-    { term: "", distance: 1, count: 3L },
+    { term: "", distance: 1, count: 3L, },
   ])
 }
 
@@ -151,7 +151,7 @@ test "full words are verified even when their prefixes collide" {
   )
   let _ = dictionary.load_dictionary("abcdefgh 10\nabcxyzgh 100")
   assert_eq(dictionary.lookup("abcdefgi"), [
-    { term: "abcdefgh", distance: 1, count: 10L },
+    { term: "abcdefgh", distance: 1, count: 10L, },
   ])
   assert_eq(dictionary.lookup("abcdefghij"), [])
 }
@@ -171,7 +171,7 @@ test "duplicates accumulate and threshold promotion indexes a term only once" {
   assert_false(dictionary.create_dictionary_entry("pipe", 4L))
   assert_eq(dictionary.entry_count(), index_size)
   assert_eq(dictionary.lookup("pip"), [
-    { term: "pipe", distance: 1, count: 16L },
+    { term: "pipe", distance: 1, count: 16L, },
   ])
 }
 
@@ -212,7 +212,7 @@ test "removal cleans all buckets and allows re-insertion" {
   assert_false(dictionary.delete_dictionary_entry("steem"))
   let _ = dictionary.create_dictionary_entry("steem", 10L)
   assert_eq(dictionary.lookup("steama"), [
-    { term: "steem", distance: 2, count: 10L },
+    { term: "steem", distance: 2, count: 10L, },
   ])
   let pending = @symspell.SymSpell::new(count_threshold=2L)
   let _ = pending.create_dictionary_entry("pending", 1L)
@@ -226,7 +226,7 @@ test "dictionary loading supports whitespace, BOM, CRLF, columns, and duplicates
   let report = dictionary.load_dictionary(
     "\u{FEFF}café\t10\r\n東京\u{2003}9\r\n\ncafé 5\n",
   )
-  assert_eq(report, { parsed_entries: 3, added_words: 2, skipped_lines: 0 })
+  assert_eq(report, { parsed_entries: 3, added_words: 2, skipped_lines: 0, })
   assert_eq(dictionary.frequency("café"), Some(15L))
   let custom = dictionary.load_dictionary(
     "20$ice cream\n30$ice cream",
@@ -234,7 +234,7 @@ test "dictionary loading supports whitespace, BOM, CRLF, columns, and duplicates
     term_index=1,
     count_index=0,
   )
-  assert_eq(custom, { parsed_entries: 2, added_words: 1, skipped_lines: 0 })
+  assert_eq(custom, { parsed_entries: 2, added_words: 1, skipped_lines: 0, })
   assert_eq(dictionary.frequency("ice cream"), Some(50L))
 }
 
@@ -252,7 +252,7 @@ test "strict dictionary parsing is transactional" {
     "new 5\nbroken nope\nmissing\nnegative -1\noverflow 9223372036854775808\n\n",
     strict=false,
   )
-  assert_eq(report, { parsed_entries: 1, added_words: 1, skipped_lines: 4 })
+  assert_eq(report, { parsed_entries: 1, added_words: 1, skipped_lines: 4, })
   assert_eq(dictionary.frequency("new"), Some(5L))
 }
 
@@ -264,15 +264,15 @@ test "unknown fallback and exact-only dictionaries" {
   )
   let _ = dictionary.create_dictionary_entry("known", 5L)
   assert_eq(dictionary.lookup("known"), [
-    { term: "known", distance: 0, count: 5L },
+    { term: "known", distance: 0, count: 5L, },
   ])
   assert_eq(dictionary.lookup("unknown"), [])
   assert_eq(dictionary.lookup("unknown", include_unknown=true), [
-    { term: "unknown", distance: 1, count: 0L },
+    { term: "unknown", distance: 1, count: 0L, },
   ])
   let empty = @symspell.SymSpell::new()
   assert_eq(empty.lookup("verylongword", include_unknown=true), [
-    { term: "verylongword", distance: 3, count: 0L },
+    { term: "verylongword", distance: 3, count: 0L, },
   ])
 }
 
