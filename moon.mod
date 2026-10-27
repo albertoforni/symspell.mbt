@@ -4,7 +4,7 @@ version = "0.4.0"
 
 readme = "README.mbt.md"
 
-repository = ""
+repository = "https://github.com/albertoforni/symspell.mbt"
 
 license = "MIT"
 
