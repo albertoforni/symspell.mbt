@@ -114,8 +114,7 @@ the JavaScript JIT inlined it, while native retained a measurable helper call
 (about 6 ns per exact lookup in profiling). Reports from 28 October onward use
 the same inline checksum work on both sides; their driver hashes differ from
 the older reports. Keep this harness change in mind when comparing exact-match
-times across dates. The
-report contains every sample's mean time per operation, then the median and
+times across dates. The report contains every sample's mean time per operation, then the median and
 range across process trials. These are batch throughput measurements, rather
 than individual-query tail latencies.
 
@@ -149,7 +148,84 @@ python scripts/benchmark.py --words 10000 --queries 512 --samples 5 --cpu 0 --ou
 python scripts/benchmark.py --words 0 --queries 512 --samples 5 --cpu 0 --output benchmarks/.cache/full.json
 ```
 
-### 28 October 2026 — optimized implementation
+### 28 October 2026 — result buffer reuse
+
+Measured on optimization commit `c807b78`, following the initial results below.
+The benchmark drivers, workload hashes, dictionary, npm lockfile, configuration,
+and snapshot byte sizes match the initial optimization run. Each engine ran in
+five fresh processes per dictionary size, pinned to CPU 0, with a 250 ms minimum
+warmup and 500 ms minimum timing window. The toolchain remains MoonBit 0.10.17
+(moon 0.1.20261023), Node.js v26.10.0, and the same Intel Core i9-12900H on Linux.
+All tested word and phrase outputs agree across engines.
+
+Both targets are faster in all nine shared operations at both dictionary sizes.
+Every MoonBit process sample is faster than every baseline process sample for
+the corresponding operation: all 36 observed ranges are separate. Median
+speedups span 1.05–3.88× for JavaScript and 1.43–7.63× for native. Native exact
+lookup now leads by 1.65× at 10,000 words and 1.43× at 82,769 words, closing the
+practical tie in the initial run.
+
+The added optimization reuses the most recent single-result backing buffer on
+ARC targets through the core ownership-aware view conversion. Arrays, escaped
+views, and lazy iterators retained by callers force independent storage;
+mutated lengths fall back to a new single-result array. All 159 tests pass on
+native, JavaScript, Wasm, and Wasm GC, including these aliasing regressions.
+Public signatures and snapshot compatibility are preserved. An independent
+integrity audit also verified all 3,058 installed files from the 14 locked npm
+packages against their integrity-checked registry tarballs.
+
+These results describe the tested workloads, runtime, and machine. The raw
+reports retain every process sample and range; they are batch-throughput
+measurements, not individual-query tail latencies.
+
+#### 10,000 words
+
+| Operation | node-symspell | MoonBit JS | MoonBit native |
+| --- | ---: | ---: | ---: |
+| Build dictionary | 72.35 ms | 68.80 ms (1.05×) | 35.74 ms (2.02×) |
+| Build from corpus | 26.71 ms | 24.39 ms (1.10×) | 13.49 ms (1.98×) |
+| Exact Top | 26.95 ns | 13.38 ns (2.01×) | 16.36 ns (1.65×) |
+| Typo Top | 3.301 µs | 1.100 µs (3.00×) | 756.23 ns (4.36×) |
+| Typo Closest | 3.338 µs | 1.141 µs (2.93×) | 785.53 ns (4.25×) |
+| Typo All | 15.376 µs | 6.988 µs (2.20×) | 4.824 µs (3.19×) |
+| Miss Top | 4.106 µs | 1.057 µs (3.88×) | 557.94 ns (7.36×) |
+| Compound correction | 63.526 µs | 30.215 µs (2.10×) | 18.777 µs (3.38×) |
+| Segmentation | 664.706 µs | 288.140 µs (2.31×) | 172.526 µs (3.85×) |
+| Save snapshot | — | 168.12 ms | 58.12 ms |
+| Restore snapshot | — | 105.29 ms | 39.28 ms |
+
+Ratios above 1× favor MoonBit. Snapshots have no baseline comparator.
+
+#### 82,769 words
+
+| Operation | node-symspell | MoonBit JS | MoonBit native |
+| --- | ---: | ---: | ---: |
+| Build dictionary | 931.97 ms | 771.43 ms (1.21×) | 544.00 ms (1.71×) |
+| Build from corpus | 28.74 ms | 24.85 ms (1.16×) | 14.96 ms (1.92×) |
+| Exact Top | 29.02 ns | 18.01 ns (1.61×) | 20.24 ns (1.43×) |
+| Typo Top | 4.568 µs | 2.192 µs (2.08×) | 1.251 µs (3.65×) |
+| Typo Closest | 4.698 µs | 2.288 µs (2.05×) | 1.298 µs (3.62×) |
+| Typo All | 33.911 µs | 29.250 µs (1.16×) | 13.886 µs (2.44×) |
+| Miss Top | 4.012 µs | 1.142 µs (3.51×) | 526.10 ns (7.63×) |
+| Compound correction | 102.981 µs | 75.742 µs (1.36×) | 38.720 µs (2.66×) |
+| Segmentation | 1.24 ms | 925.223 µs (1.34×) | 437.864 µs (2.83×) |
+| Save snapshot | — | 1.518 s | 674.89 ms |
+| Restore snapshot | — | 792.17 ms | 417.07 ms |
+
+Ratios above 1× favor MoonBit. Snapshots have no baseline comparator.
+
+#### Peak process RSS
+
+| Dictionary | node-symspell | MoonBit JS | MoonBit native |
+| --- | ---: | ---: | ---: |
+| 10,000 words | 128.8 MiB | 131.3 MiB | 44.6 MiB |
+| 82,769 words | 359.5 MiB | 400.2 MiB | 163.4 MiB |
+
+RSS includes input and runtime. Snapshot sizes remain 2.44 MiB and 17.89 MiB.
+
+[10,000-word data](results/2026-10-28-owned-results-10000.json) · [Full-dictionary data](results/2026-10-28-owned-results-full.json) · [Interactive comparison](results/2026-10-28-owned-results-comparison.html)
+
+### 28 October 2026 — initial optimization
 
 Measured on unreleased optimization commit `0e439b6`, with MoonBit 0.10.17
 (moon 0.1.20261023), Node.js v26.10.0, and the same Intel Core i9-12900H on
