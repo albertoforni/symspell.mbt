@@ -6,6 +6,7 @@
 - Replace candidate hash sets with dictionary epochs and specialize two-edit OSA scoring.
 - Use compact native/Wasm slot tables and JavaScript's built-in Map for index slots.
 - Reuse immutable exact suggestions while keeping returned arrays independent.
+- Recycle uniquely owned single-result buffers on ARC targets; preserve escaped arrays, views, and iterators.
 - Slice corpus and dictionary tokens, parse common decimal counts without per-digit BigInt work, and extend segmentation spans incrementally.
 - Preserve Unicode distances, full Int64 frequencies, public signatures, and snapshot bytes; add collision, epoch, aliasing, numeric-boundary, and exhaustive OSA lookup regressions.
 

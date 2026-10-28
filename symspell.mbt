@@ -64,6 +64,7 @@ fn character_signature(chars : Array[Char]) -> UInt32 {
 /// characters, never UTF-8 bytes or UTF-16 offsets. Matching is case-sensitive;
 /// normalize both dictionary terms and queries before using this API if needed.
 pub struct SymSpell {
+  priv exact_results : ExactResults
   priv words : WordTable
   priv pending : Map[String, Int64]
   priv deletes : StringTable[Array[Word]]
@@ -101,6 +102,7 @@ pub fn SymSpell::new(
     raise InvalidCorpusSize(corpus_size)
   }
   {
+    exact_results: ExactResults::new(),
     words: WordTable::new(),
     pending: Map([]),
     deletes: StringTable::new(),
@@ -274,7 +276,7 @@ pub fn SymSpell::lookup(
   }
   let exact = self.words.get(term)
   if exact is Some(word) && !(verbosity is All) {
-    return [word.exact]
+    return self.exact_results.single(word.exact)
   }
   self.lookup_candidates(term, verbosity, limit, include_unknown, exact)
 }
@@ -315,7 +317,7 @@ pub fn SymSpell::lookup(
   let mut slot = hash & mask
   while self.words.entries.unsafe_get(slot) is Some(entry) {
     if entry.term_hash == hash && entry.term == term {
-      return [entry.exact]
+      return self.exact_results.single(entry.exact)
     }
     slot = (slot + 1) & mask
   }

@@ -179,3 +179,49 @@ test "word hash collisions preserve exact lookup, updates, removal, and restore"
   ignore(restored.create_dictionary_entry(first, 30L))
   assert_eq(restored.lookup(first)[0].count, 30L)
 }
+
+///|
+fn exact_result_view(
+  dictionary : SymSpell,
+  term : String,
+) -> ArrayView[Suggestion] raise SymSpellError {
+  dictionary.lookup(term)[:]
+}
+
+///|
+fn exact_result_iterator(
+  dictionary : SymSpell,
+  term : String,
+) -> Iter[Suggestion] raise SymSpellError {
+  dictionary.lookup(term).iter()
+}
+
+///|
+test "exact result reuse preserves arrays, escaped views, and lazy iterators" {
+  let dictionary = SymSpell::new()
+  ignore(dictionary.create_dictionary_entry("cat", 10L))
+  ignore(dictionary.create_dictionary_entry("bat", 20L))
+  let array = dictionary.lookup("cat")
+  let other = dictionary.lookup("bat")
+  assert_eq(array[0].term, "cat")
+  assert_eq(other[0].term, "bat")
+  let view = exact_result_view(dictionary, "cat")
+  let iterator = exact_result_iterator(dictionary, "cat")
+  ignore(dictionary.lookup("bat"))
+  assert_eq(view[0].term, "cat")
+  assert_eq(iterator.to_array()[0].term, "cat")
+  array[0] = { term: "modified", distance: 99, count: 0L, }
+  other.clear()
+  assert_eq(dictionary.lookup("cat")[0].term, "cat")
+  let changed = dictionary.lookup("cat")
+  changed.push({ term: "extra", distance: 1, count: 1L, })
+  assert_eq(dictionary.lookup("bat"), [
+    { term: "bat", distance: 0, count: 20L, },
+  ])
+  assert_eq(changed.length(), 2)
+  let mutated = dictionary.lookup("cat")
+  mutated[0] = { term: "modified", distance: 99, count: 0L, }
+  assert_eq(dictionary.lookup("bat")[0].term, "bat")
+  assert_eq(mutated[0].term, "modified")
+  assert_eq(view[0].term, "cat")
+}

@@ -88,7 +88,10 @@ with words stored directly in exact-match slots; JavaScript uses the runtime's
 built-in `Map`. All targets trim common affixes, screen character-signature
 lower bounds, and use a specialized two-edit OSA kernel. Larger cutoffs retain
 the general deletion and banded-distance paths. Exact lookups reuse immutable
-suggestion records while returning independent mutable arrays.
+suggestion records while returning independent mutable arrays. Native and linear-memory
+Wasm recycle the most recent single-result backing buffer through the core
+ownership-aware view conversion. Surviving arrays, views, or iterators force a
+copy, and mutated result lengths use a fresh single-result array.
 
 An independent full-matrix OSA oracle checks the optimized and general paths,
 alongside the existing cross-target fixtures. Additional regressions exercise
