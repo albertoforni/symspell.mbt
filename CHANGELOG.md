@@ -1,7 +1,8 @@
 # Changelog
 
-## Unreleased
+## 0.4.2 — 2026-10-28
 
+- Outperform `node-symspell@0.1.0` on all nine shared benchmark operations at both recorded dictionary sizes: 1.05–3.88× on JavaScript and 1.43–7.63× on native. See the [benchmark methodology and results](benchmarks/README.md).
 - Probe one- and two-edit deletion hashes without allocating query deletion strings.
 - Replace candidate hash sets with dictionary epochs and specialize two-edit OSA scoring.
 - Use compact native/Wasm slot tables and JavaScript's built-in Map for index slots.
