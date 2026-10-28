@@ -146,6 +146,76 @@ python scripts/benchmark.py --words 10000 --queries 512 --samples 5 --cpu 0 --ou
 python scripts/benchmark.py --words 0 --queries 512 --samples 5 --cpu 0 --output benchmarks/.cache/full.json
 ```
 
+### 28 October 2026 — optimized implementation
+
+Measured on unreleased optimization commit `0e439b6`, with MoonBit 0.10.17
+(moon 0.1.20261023), Node.js v26.10.0, and the same Intel Core i9-12900H on
+Linux. Both sizes use five independent processes per engine, a 250 ms minimum
+warmup, a 500 ms minimum sample, and CPU affinity 0. Workload hashes, dictionary,
+npm lockfile, and snapshot bytes match 27 October. All tested word and phrase
+outputs agree across engines, allowing the documented lexical ties.
+
+Both MoonBit targets have lower median times for all nine shared operations at
+both sizes. Native Exact Top at 10,000 words is only 1.01× with overlapping
+sample ranges, so treat it as a tie. Across the measured cases, JavaScript
+speedups range from 1.06× to 3.89× and native from 1.01× to 7.42×. These are
+synthetic-workload medians on this machine, not guarantees for every dictionary,
+query distribution, runtime, or processor.
+
+The index, distance, ingestion, and phrase implementations changed. The checksum
+work was also inlined in both benchmark drivers, as explained under
+[Measurement method](#measurement-method); driver hashes differ from older
+reports, especially affecting comparisons of nanosecond-scale exact lookups.
+
+#### 10,000 words
+
+| Operation | node-symspell | MoonBit JS | MoonBit native |
+| --- | ---: | ---: | ---: |
+| Build dictionary | 72.41 ms | 68.40 ms (1.06×) | 36.04 ms (2.01×) |
+| Build from corpus | 26.74 ms | 24.67 ms (1.08×) | 13.50 ms (1.98×) |
+| Exact Top | 27.46 ns | 13.48 ns (2.04×) | 27.26 ns (1.01×) |
+| Typo Top | 3.397 µs | 1.090 µs (3.12×) | 767.18 ns (4.43×) |
+| Typo Closest | 3.351 µs | 1.142 µs (2.93×) | 795.05 ns (4.21×) |
+| Typo All | 15.234 µs | 6.996 µs (2.18×) | 4.813 µs (3.17×) |
+| Miss Top | 4.079 µs | 1.047 µs (3.89×) | 565.38 ns (7.21×) |
+| Compound correction | 62.324 µs | 30.392 µs (2.05×) | 18.831 µs (3.31×) |
+| Segmentation | 694.318 µs | 291.921 µs (2.38×) | 175.930 µs (3.95×) |
+| Save snapshot | — | 170.45 ms | 59.29 ms |
+| Restore snapshot | — | 104.68 ms | 38.84 ms |
+
+Ratios above 1× favor MoonBit. Snapshot times have no JavaScript comparator.
+
+#### 82,769 words
+
+| Operation | node-symspell | MoonBit JS | MoonBit native |
+| --- | ---: | ---: | ---: |
+| Build dictionary | 909.24 ms | 769.57 ms (1.18×) | 550.09 ms (1.65×) |
+| Build from corpus | 28.76 ms | 24.44 ms (1.18×) | 15.00 ms (1.92×) |
+| Exact Top | 27.16 ns | 17.80 ns (1.53×) | 22.24 ns (1.22×) |
+| Typo Top | 4.604 µs | 2.227 µs (2.07×) | 1.253 µs (3.67×) |
+| Typo Closest | 4.598 µs | 2.291 µs (2.01×) | 1.313 µs (3.50×) |
+| Typo All | 34.066 µs | 29.065 µs (1.17×) | 13.782 µs (2.47×) |
+| Miss Top | 3.920 µs | 1.142 µs (3.43×) | 528.02 ns (7.42×) |
+| Compound correction | 101.693 µs | 74.127 µs (1.37×) | 38.702 µs (2.63×) |
+| Segmentation | 1.25 ms | 916.050 µs (1.36×) | 433.264 µs (2.88×) |
+| Save snapshot | — | 1.542 s | 674.74 ms |
+| Restore snapshot | — | 796.67 ms | 400.63 ms |
+
+Ratios above 1× favor MoonBit. Snapshot times have no JavaScript comparator.
+
+#### Peak process RSS
+
+| Dictionary | node-symspell | MoonBit JS | MoonBit native |
+| --- | ---: | ---: | ---: |
+| 10,000 words | 129.0 MiB | 131.0 MiB | 44.6 MiB |
+| 82,769 words | 360.1 MiB | 402.2 MiB | 163.2 MiB |
+
+These are fresh dictionary-process high-water marks, including input and runtime.
+Snapshot sizes remain 2.44 MiB and 17.89 MiB. Reports preserve every process
+sample and its range, the source and driver hashes, and the environment.
+
+[10,000-word data](results/2026-10-28-optimized-10000.json) · [Full-dictionary data](results/2026-10-28-optimized-full.json) · [Interactive comparison](results/2026-10-28-optimized-comparison.html)
+
 ### 27 October 2026
 
 Measured with SymSpell 0.4.1 (commit `2656c2b`) and MoonBit 0.10.17 (moon 0.1.20261023) on the same Intel Core i9-12900H, Linux, and Node.js v26.10.0. Both sizes use five independent processes per engine, a 250 ms minimum warmup, a 500 ms minimum sample, and CPU affinity 0. All tested word and phrase outputs agree across engines, allowing the documented lexical ties.
