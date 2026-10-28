@@ -273,7 +273,7 @@ pub fn SymSpell::lookup(
     Some(_) => self.resolve_edit_distance(max_edit_distance)
   }
   let exact = self.words.get(term)
-  if exact is Some(word) && verbosity != All {
+  if exact is Some(word) && !(verbosity is All) {
     return [word.exact]
   }
   self.lookup_candidates(term, verbosity, limit, include_unknown, exact)
@@ -301,21 +301,21 @@ pub fn SymSpell::lookup(
     None => self.max_dictionary_edit_distance
     Some(_) => self.resolve_edit_distance(max_edit_distance)
   }
+  if verbosity is All {
+    return self.lookup_candidates(
+      term,
+      verbosity,
+      limit,
+      include_unknown,
+      self.words.get(term),
+    )
+  }
   let hash = word_table_hash(term)
   let mask = self.words.entries.length() - 1
   let mut slot = hash & mask
   while self.words.entries.unsafe_get(slot) is Some(entry) {
     if entry.term_hash == hash && entry.term == term {
-      if verbosity != All {
-        return [entry.exact]
-      }
-      return self.lookup_candidates(
-        term,
-        verbosity,
-        limit,
-        include_unknown,
-        Some(entry),
-      )
+      return [entry.exact]
     }
     slot = (slot + 1) & mask
   }
@@ -417,7 +417,7 @@ fn SymSpell::lookup_candidates(
       }
     }
   }
-  if verbosity != Top {
+  if !(verbosity is Top) {
     suggestions.sort_by(compare_suggestions)
   }
   if suggestions.is_empty() && include_unknown {
@@ -649,11 +649,11 @@ fn LookupSearch::consider(
         self.workspace,
       )
       is Some(distance) {
-      if self.verbosity != All && distance < self.cutoff {
+      if !(self.verbosity is All) && distance < self.cutoff {
         self.suggestions.clear()
         self.cutoff = distance
       }
-      if self.verbosity == Top && !self.suggestions.is_empty() {
+      if self.verbosity is Top && !self.suggestions.is_empty() {
         let best = self.suggestions[0]
         if word.count > best.count ||
           (word.count == best.count && word.term.lexical_compare(best.term) < 0) {
