@@ -79,13 +79,21 @@ and speedups for the affected operation are withheld. This accommodates the
 port's documented phrase behavior while preventing different outputs from
 being presented as a speed win.
 
-The optimized lookup generates deletion layers as needed, trims shared affixes,
-reuses distance buffers, and caches immutable word hashes. Native and Wasm also
-screen full-word character signatures before scoring candidates. The signature
-can only underestimate the edits needed, including when Unicode characters
-collide in its bit mask. JavaScript skips this software bit-count screen. An
-independent full-matrix OSA oracle checks trimming, buffer reuse, and signature
-lower bounds, alongside the existing exhaustive cross-target fixtures.
+For one- and two-edit lookups, the optimized implementation enumerates deleted
+prefix positions and probes their rolling hashes without creating deletion
+strings or a query-side deduplication table. Hash collisions add candidates;
+full Unicode OSA verification still decides every match. Dictionary epochs
+prevent repeated candidate scoring. Native and Wasm use open-addressed slots,
+with words stored directly in exact-match slots; JavaScript uses the runtime's
+built-in `Map`. All targets trim common affixes, screen character-signature
+lower bounds, and use a specialized two-edit OSA kernel. Larger cutoffs retain
+the general deletion and banded-distance paths. Exact lookups reuse immutable
+suggestion records while returning independent mutable arrays.
+
+An independent full-matrix OSA oracle checks the optimized and general paths,
+alongside the existing cross-target fixtures. Additional regressions exercise
+hash collisions, cluster removal, Unicode deletion hashes, epoch wraparound,
+returned-array independence, and exact frequency parsing at numeric boundaries.
 
 ## Measurement method
 
@@ -96,7 +104,14 @@ finish. Both JavaScript engines receive `--expose-gc` and collect garbage after
 warmup, outside the timing window. Collections caused by measured work remain
 part of its cost. Native code uses its normal reference counting.
 
-Timers are monotonic. Every result contributes to a printed checksum. The
+Timers are monotonic. Every result contributes to a printed checksum.
+Both drivers accumulate result counts, term lengths, and edit distances directly
+inside their batch loops. Earlier reports called a separate checksum helper:
+the JavaScript JIT inlined it, while native retained a measurable helper call
+(about 6 ns per exact lookup in profiling). Reports from 28 October onward use
+the same inline checksum work on both sides; their driver hashes differ from
+the older reports. Keep this harness change in mind when comparing exact-match
+times across dates. The
 report contains every sample's mean time per operation, then the median and
 range across process trials. These are batch throughput measurements, rather
 than individual-query tail latencies.

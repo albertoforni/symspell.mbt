@@ -22,12 +22,6 @@ function corpus() {
   return { result, tokens: words.length };
 }
 
-function consume(items) {
-  let sum = items.length;
-  for (const item of items) sum += item.term.length + item.distance;
-  return sum;
-}
-
 const lookups = [
   ['exact_top', data.exact_queries, SymSpell.Verbosity.TOP],
   ['typo_top', data.typo_queries, SymSpell.Verbosity.TOP],
@@ -84,13 +78,21 @@ if (process.argv[3] === 'memory') {
   for (const [name, queries, mode] of lookups) {
     measure(name, () => {
       let sum = 0;
-      for (const query of queries) sum += consume(dict.lookup(query, mode, 2));
+      for (const query of queries) {
+        const items = dict.lookup(query, mode, 2);
+        sum += items.length;
+        for (const item of items) sum += item.term.length + item.distance;
+      }
       return sum;
     }, queries.length);
   }
   measure('compound', () => {
     let sum = 0;
-    for (const query of data.compound_queries) sum += consume(dict.lookupCompound(query, 2));
+    for (const query of data.compound_queries) {
+      const items = dict.lookupCompound(query, 2);
+      sum += items.length;
+      for (const item of items) sum += item.term.length + item.distance;
+    }
     return sum;
   }, data.compound_queries.length);
   measure('segmentation', () => {
