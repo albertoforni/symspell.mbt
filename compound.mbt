@@ -57,18 +57,21 @@ pub fn SymSpell::lookup_compound(
       continue
     }
     let mut best_split = original
+    let mut split_offset = 0
     for split = 1; split < chars.length(); split = split + 1 {
+      split_offset = split_offset +
+        (if chars[split - 1].to_int() > 0xFFFF { 2 } else { 1 })
       let left = self.lookup(
-        String::from_array(chars[:split]),
-        verbosity=Top,
-        max_edit_distance=limit,
-      )
-      let right = self.lookup(
-        String::from_array(chars[split:]),
+        term.unsafe_substring(start=0, end=split_offset),
         verbosity=Top,
         max_edit_distance=limit,
       )
       guard left.get(0) is Some(first) else { continue }
+      let right = self.lookup(
+        term.unsafe_substring(start=split_offset, end=term.length()),
+        verbosity=Top,
+        max_edit_distance=limit,
+      )
       guard right.get(0) is Some(second) else { continue }
       let correction = first.term + " " + second.term
       let distance = osa_distance(chars, correction.to_array(), limit).unwrap_or(

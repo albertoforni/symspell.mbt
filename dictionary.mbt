@@ -82,11 +82,7 @@ fn parse_frequency_rows(
       None => split_whitespace(line)
     }
     let parsed = if Int32::max(term_index, count_index) < fields.length() {
-      let count = try @string.parse_int64(fields[count_index][:]) catch {
-        _ => None
-      } noraise {
-        count => Some(count)
-      }
+      let count = parse_frequency_count(fields[count_index])
       let term = if bigram && separator is None {
         if term_index < fields.length() - 1 {
           Some(fields[term_index] + " " + fields[term_index + 1])
@@ -120,19 +116,48 @@ fn parse_frequency_rows(
 ///|
 fn split_whitespace(text : String) -> Array[String] {
   let fields : Array[String] = []
-  let builder = StringBuilder()
+  let mut start = -1
+  let mut offset = 0
   for character in text {
     if character.is_whitespace() {
-      if !builder.is_empty() {
-        fields.push(builder.to_string())
-        builder.reset()
+      if start >= 0 {
+        fields.push(text.unsafe_substring(start~, end=offset))
+        start = -1
       }
-    } else {
-      builder.write_char(character)
+    } else if start < 0 {
+      start = offset
     }
+    offset = offset + (if character.to_int() > 0xFFFF { 2 } else { 1 })
   }
-  if !builder.is_empty() {
-    fields.push(builder.to_string())
+  if start >= 0 {
+    fields.push(text.unsafe_substring(start~, end=offset))
   }
   fields
+}
+
+///|
+/// Decimal counts of up to 15 digits are exact in Double. Parse this common
+/// case without per-digit Int64/BigInt arithmetic; retain the core parser for
+/// larger counts, signs, radix prefixes, separators, and syntax validation.
+fn parse_frequency_count(text : String) -> Int64? {
+  if text.length() > 0 && text.length() <= 15 {
+    let mut value = 0.0
+    let mut decimal = true
+    for i = 0; i < text.length(); i = i + 1 {
+      let digit = text.unsafe_get(i).to_int() - 48
+      if digit < 0 || digit > 9 {
+        decimal = false
+        break
+      }
+      value = value * 10.0 + digit.to_double()
+    }
+    if decimal {
+      return Some(value.to_int64())
+    }
+  }
+  try @string.parse_int64(text[:]) catch {
+    _ => None
+  } noraise {
+    value => Some(value)
+  }
 }

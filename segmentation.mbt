@@ -119,6 +119,14 @@ pub fn SymSpell::word_segmentation(
     }
     let maximum = Int32::min(chars.length() - start, size)
     let mut non_spaces = 0
+    let leading_space = chars[start].is_whitespace()
+    let separator_cost = if leading_space || previous.separator_present {
+      0
+    } else {
+      1
+    }
+    let builder = StringBuilder()
+    let mut removed_spaces = 0
     for length = 1; length <= maximum; length = length + 1 {
       if !chars[start + length - 1].is_whitespace() {
         non_spaces = non_spaces + 1
@@ -126,16 +134,8 @@ pub fn SymSpell::word_segmentation(
       if non_spaces > window {
         break
       }
-      let leading_space = chars[start].is_whitespace()
-      let separator_cost = if leading_space || previous.separator_present {
-        0
-      } else {
-        1
-      }
-      let builder = StringBuilder()
-      let mut removed_spaces = 0
-      let offset = if leading_space { start + 1 } else { start }
-      for position = offset; position < start + length; position = position + 1 {
+      let position = start + length - 1
+      if !(leading_space && length == 1) {
         if chars[position].is_whitespace() {
           removed_spaces = removed_spaces + 1
         } else {
@@ -155,7 +155,7 @@ pub fn SymSpell::word_segmentation(
             self.word_log_probability(suggestion.count),
           )
         None => {
-          let length = part.char_length()
+          let length = non_spaces
           (part, removed_spaces + length, self.unknown_log_probability(length))
         }
       }

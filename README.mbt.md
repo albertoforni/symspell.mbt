@@ -1,12 +1,13 @@
 # SymSpell for MoonBit
 
-A pure MoonBit implementation of SymSpell spelling correction and segmentation.
+A MoonBit implementation of SymSpell spelling correction and segmentation.
 It uses a precomputed deletion index to find candidates, then verifies them
 with cutoff-aware optimal string alignment distance and ranks them by frequency.
 
 The library depends only on `moonbitlang/core` and runs on native, JavaScript,
 WebAssembly, and WebAssembly GC. There are no C bindings or runtime dictionary
-downloads. The module name is `albertoforni/symspell`.
+downloads. The JavaScript index uses the runtime's built-in `Map`; spelling
+correction and Unicode handling stay in MoonBit. The module name is `albertoforni/symspell`.
 
 ## Installation
 
@@ -331,8 +332,9 @@ Damerau-Levenshtein in cases that edit the same substring more than once.
 The default prefix length is 7 and must exceed the configured maximum distance.
 Longer prefixes and larger edit limits increase index size. This implementation
 is intended for small spelling-error limits, usually 1 or 2. The candidate
-verifier uses three reusable rows and a cutoff band; it does not scan the full
-dictionary during lookup. Lookup settings affect candidate work, so benchmark
+verifier handles one- and two-edit cutoffs directly, using three reusable rows
+and a cutoff band for larger limits; it does not scan the full dictionary
+during lookup. Lookup settings affect candidate work, so benchmark
 your own dictionary before making performance claims.
 
 ## Performance
@@ -340,7 +342,9 @@ your own dictionary before making performance claims.
 The comparison harness measures release builds on native and JavaScript against
 a pinned `node-symspell` package, using the same real English dictionary and
 deterministic synthetic queries. It validates results before timing and records
-independent process samples, memory use, and snapshot size.
+independent process samples, memory use, and snapshot size. Dictionary instances
+reuse mutable lookup markers; synchronize access or use separate instances for
+concurrent workers.
 
 ```sh
 python scripts/benchmark.py --words 10000

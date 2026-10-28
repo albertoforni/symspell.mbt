@@ -80,6 +80,61 @@ fn osa_distance_with_workspace(
       None
     }
   }
+  if limit == 2 {
+    // At the first unequal pair, every OSA path begins with a replacement,
+    // insertion, deletion, or a non-overlapping adjacent transposition. With
+    // only two edits left, check these four suffixes using the one-edit kernel
+    // instead of filling a matrix. Larger cutoffs retain the banded algorithm.
+    if left[offset] == right[offset + 1] && left[offset + 1] == right[offset] {
+      let rest = one_edit_distance(
+        left,
+        offset + 2,
+        offset + columns,
+        right,
+        offset + 2,
+        offset + rows,
+      )
+      if rest >= 0 {
+        return Some(rest + 1)
+      }
+    }
+    if rows - columns <= 1 &&
+      one_edit_distance(
+        left,
+        offset + 1,
+        offset + columns,
+        right,
+        offset + 1,
+        offset + rows,
+      ) >=
+      0 {
+      return Some(2)
+    }
+    if one_edit_distance(
+        left,
+        offset,
+        offset + columns,
+        right,
+        offset + 1,
+        offset + rows,
+      ) >=
+      0 {
+      return Some(2)
+    }
+    if columns == rows &&
+      one_edit_distance(
+        left,
+        offset + 1,
+        offset + columns,
+        right,
+        offset,
+        offset + rows,
+      ) >=
+      0 {
+      return Some(2)
+    }
+    return None
+  }
   let infinity = limit + 1
   if workspace.row0.length() < columns + 1 {
     workspace.row0 = Array::make(columns + 1, infinity)
@@ -137,5 +192,51 @@ fn osa_distance_with_workspace(
     Some(previous[columns])
   } else {
     None
+  }
+}
+
+///|
+/// Return 0 or 1 for a suffix within one OSA edit, and -1 otherwise. The caller
+/// passes valid half-open character ranges, including empty suffixes.
+fn one_edit_distance(
+  a : Array[Char],
+  a_start : Int32,
+  a_end : Int32,
+  b : Array[Char],
+  b_start : Int32,
+  b_end : Int32,
+) -> Int32 {
+  let mut a_end = a_end
+  let mut b_end = b_end
+  if (a_end - a_start - (b_end - b_start)).abs() > 1 {
+    return -1
+  }
+  while a_end > a_start && b_end > b_start && a[a_end - 1] == b[b_end - 1] {
+    a_end = a_end - 1
+    b_end = b_end - 1
+  }
+  let mut a_start = a_start
+  let mut b_start = b_start
+  while a_start < a_end && b_start < b_end && a[a_start] == b[b_start] {
+    a_start = a_start + 1
+    b_start = b_start + 1
+  }
+  let a_length = a_end - a_start
+  let b_length = b_end - b_start
+  if a_length == 0 || b_length == 0 {
+    return if a_length + b_length <= 1 { a_length + b_length } else { -1 }
+  }
+  if a_length == b_length &&
+    (
+      a_length == 1 ||
+      (
+        a_length == 2 &&
+        a[a_start] == b[b_start + 1] &&
+        a[a_start + 1] == b[b_start]
+      )
+    ) {
+    1
+  } else {
+    -1
   }
 }

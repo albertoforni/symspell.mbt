@@ -29,7 +29,8 @@ pub fn SymSpell::to_snapshot(self : SymSpell) -> Bytes {
   }
   write_snapshot_frequencies(buffer, self.pending)
   write_snapshot_frequencies(buffer, self.bigrams)
-  let keys = sorted_snapshot_keys(self.deletes)
+  let keys = self.deletes.keys().to_array()
+  keys.sort_by(String::lexical_compare)
   buffer.write_int_le(keys.length())
   for key in keys {
     write_snapshot_string(buffer, key)
@@ -100,9 +101,11 @@ pub fn SymSpell::from_snapshot(data : Bytes) -> SymSpell raise SymSpellError {
     let word = Word::{
       term,
       chars,
-      term_hash: term.hash(),
+      term_hash: word_table_hash(term),
+      seen: 0,
       signature: character_signature(chars),
       count,
+      exact: { term, distance: 0, count, },
     }
     words.push(word)
     dictionary.words[term] = word

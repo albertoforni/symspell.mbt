@@ -35,29 +35,16 @@ pub(all) suberror SymSpellError {
 let max_frequency : Int64 = 9223372036854775807L
 
 ///|
+// Cached term_hash is used by the native/Wasm slots; JS uses runtime string hashes.
+#warnings("-unused_field")
 struct Word {
   term : String
   chars : Array[Char]
   term_hash : Int32
+  mut seen : Int32
   signature : UInt32
   mut count : Int64
-}
-
-///|
-/// Candidate de-duplication uses the immutable term and its cached hash, not
-/// the frequency (which may change between lookups).
-impl Eq for Word with fn equal(self, other) {
-  self.term == other.term
-}
-
-///|
-impl Hash for Word with fn hash_combine(self, hasher) {
-  hasher.combine(self.term)
-}
-
-///|
-impl Hash for Word with fn hash(self) {
-  self.term_hash
+  mut exact : Suggestion
 }
 
 ///|
@@ -73,33 +60,20 @@ fn character_signature(chars : Array[Char]) -> UInt32 {
 }
 
 ///|
-// Native and Wasm have an intrinsic population count. Keep JavaScript's hot
-// lookup path free of the software bit-count screen and its extra work.
-#cfg(target="js")
-fn use_character_filter() -> Bool {
-  false
-}
-
-///|
-#cfg(not(target="js"))
-fn use_character_filter() -> Bool {
-  true
-}
-
-///|
 /// A mutable SymSpell dictionary. All indexing and distances use Unicode
 /// characters, never UTF-8 bytes or UTF-16 offsets. Matching is case-sensitive;
 /// normalize both dictionary terms and queries before using this API if needed.
 pub struct SymSpell {
-  priv words : Map[String, Word]
+  priv words : WordTable
   priv pending : Map[String, Int64]
-  priv deletes : Map[String, Array[Word]]
+  priv deletes : StringTable[Array[Word]]
   priv bigrams : Map[String, Int64]
   priv mut bigram_count_min : Int64
   priv corpus_size : Int64
   priv max_dictionary_edit_distance : Int32
   priv prefix_length : Int32
   priv count_threshold : Int64
+  priv mut lookup_id : Int32
   priv mut max_word_length : Int32
 }
 
@@ -127,15 +101,16 @@ pub fn SymSpell::new(
     raise InvalidCorpusSize(corpus_size)
   }
   {
-    words: Map([]),
+    words: WordTable::new(),
     pending: Map([]),
-    deletes: Map([]),
+    deletes: StringTable::new(),
     bigrams: Map([]),
     bigram_count_min: max_frequency,
     corpus_size,
     max_dictionary_edit_distance,
     prefix_length,
     count_threshold,
+    lookup_id: 0,
     max_word_length: 0,
   }
 }
@@ -182,23 +157,33 @@ pub fn SymSpell::create_dictionary_entry(
   }
   if self.words.get(term) is Some(word) {
     word.count = add_frequency(word.count, count)
+    word.exact = { term: word.term, distance: 0, count: word.count, }
     return false
   }
-  if self.pending.get(term) is Some(previous) {
+  let pending = if self.pending.is_empty() {
+    None
+  } else {
+    self.pending.get(term)
+  }
+  if pending is Some(previous) {
     count = add_frequency(previous, count)
   }
   if count < self.count_threshold {
     self.pending[term] = count
     return false
   }
-  self.pending.remove(term)
+  if pending is Some(_) {
+    self.pending.remove(term)
+  }
   let chars = term.to_array()
   let word = {
     term,
     chars,
-    term_hash: term.hash(),
+    term_hash: word_table_hash(term),
+    seen: 0,
     signature: character_signature(chars),
     count,
+    exact: { term, distance: 0, count, },
   }
   self.words[term] = word
   self.max_word_length = Int32::max(self.max_word_length, chars.length())
@@ -207,8 +192,13 @@ pub fn SymSpell::create_dictionary_entry(
       chars,
       self.prefix_length,
       self.max_dictionary_edit_distance,
+      deduplicate=false,
+      source=term,
     ) {
-    self.deletes.get_or_init(key, () => []).push(word)
+    let bucket = self.deletes.get_or_init(key, () => [])
+    if bucket.is_empty() || !physical_equal(bucket[bucket.length() - 1], word) {
+      bucket.push(word)
+    }
   }
   true
 }
@@ -267,6 +257,8 @@ pub fn SymSpell::delete_dictionary_entry(
 /// `max_edit_distance` defaults to the dictionary's configured maximum.
 /// With `include_unknown`, an unmatched query is returned with count zero and
 /// distance `max_edit_distance + 1`.
+#inline
+#cfg(target="js")
 pub fn SymSpell::lookup(
   self : SymSpell,
   term : String,
@@ -274,85 +266,154 @@ pub fn SymSpell::lookup(
   max_edit_distance? : Int32,
   include_unknown~ : Bool = false,
 ) -> Array[Suggestion] raise SymSpellError {
-  let limit = self.resolve_edit_distance(max_edit_distance)
-  let suggestions : Array[Suggestion] = []
+  // The constructor already validated the default. Only explicit overrides
+  // need another range check on this hot path.
+  let limit = match max_edit_distance {
+    None => self.max_dictionary_edit_distance
+    Some(_) => self.resolve_edit_distance(max_edit_distance)
+  }
   let exact = self.words.get(term)
-  if exact is Some(word) {
-    suggestions.push({ term, distance: 0, count: word.count, })
-    if verbosity != All {
-      return suggestions
+  if exact is Some(word) && verbosity != All {
+    return [word.exact]
+  }
+  self.lookup_candidates(term, verbosity, limit, include_unknown, exact)
+}
+
+///|
+/// Find spelling suggestions. Rank by distance ascending, frequency descending,
+/// and finally term ascending for deterministic ties. Distances use restricted
+/// Damerau-Levenshtein (optimal string alignment), including adjacent swaps.
+/// `max_edit_distance` defaults to the dictionary's configured maximum.
+/// With `include_unknown`, an unmatched query is returned with count zero and
+/// distance `max_edit_distance + 1`.
+#inline
+#cfg(not(target="js"))
+pub fn SymSpell::lookup(
+  self : SymSpell,
+  term : String,
+  verbosity~ : Verbosity = Closest,
+  max_edit_distance? : Int32,
+  include_unknown~ : Bool = false,
+) -> Array[Suggestion] raise SymSpellError {
+  // The constructor already validated the default. Only explicit overrides
+  // need another range check on this hot path.
+  let limit = match max_edit_distance {
+    None => self.max_dictionary_edit_distance
+    Some(_) => self.resolve_edit_distance(max_edit_distance)
+  }
+  let hash = word_table_hash(term)
+  let mask = self.words.entries.length() - 1
+  let mut slot = hash & mask
+  while self.words.entries.unsafe_get(slot) is Some(entry) {
+    if entry.term_hash == hash && entry.term == term {
+      if verbosity != All {
+        return [entry.exact]
+      }
+      return self.lookup_candidates(
+        term,
+        verbosity,
+        limit,
+        include_unknown,
+        Some(entry),
+      )
     }
+    slot = (slot + 1) & mask
+  }
+  self.lookup_candidates(term, verbosity, limit, include_unknown, None)
+}
+
+///|
+fn SymSpell::lookup_candidates(
+  self : SymSpell,
+  term : String,
+  verbosity : Verbosity,
+  limit : Int32,
+  include_unknown : Bool,
+  exact : Word?,
+) -> Array[Suggestion] {
+  let suggestions : Array[Suggestion] = []
+  if exact is Some(word) {
+    suggestions.push(word.exact)
   }
   let query = term.to_array()
   if limit > 0 && query.length() - limit <= self.max_word_length {
-    let signature = if use_character_filter() {
-      character_signature(query)
-    } else {
-      0U
+    if self.lookup_id == 2147483647 {
+      for word in self.words.values() {
+        word.seen = 0
+      }
+      self.lookup_id = 0
     }
-    let considered : @set.Set[Word] = @set.Set([])
+    self.lookup_id = self.lookup_id + 1
+    let lookup_id = self.lookup_id
     if exact is Some(word) {
-      considered.add(word)
+      word.seen = lookup_id
     }
-    let workspace = OsaWorkspace::new()
-    let mut cutoff = limit
-    let prefix = String::from_array(
-      query[:Int32::min(query.length(), self.prefix_length)],
-    )
-    let variants = [prefix]
-    let seen = @set.Set([prefix])
-    let mut start = 0
-    for depth = 0; depth <= cutoff; depth = depth + 1 {
-      let end = variants.length()
-      for i = start; i < end; i = i + 1 {
-        if self.deletes.get(variants[i]) is Some(bucket) {
-          for word in bucket {
-            if (query.length() - word.chars.length()).abs() > cutoff {
-              continue
-            }
-            // The index only constrains prefixes. Reject incompatible suffix
-            // character sets before hashing or scoring a full-length word.
-            if use_character_filter() &&
-              (
-                query.length() > self.prefix_length ||
-                word.chars.length() > self.prefix_length
-              ) &&
-              (
-                (signature & word.signature.lnot()).popcnt() > cutoff ||
-                (word.signature & signature.lnot()).popcnt() > cutoff
-              ) {
-              continue
-            }
-            if !considered.add_and_check(word) {
-              continue
-            }
-            if osa_distance_with_workspace(query, word.chars, cutoff, workspace)
-              is Some(distance) {
-              if verbosity != All && distance < cutoff {
-                suggestions.clear()
-                cutoff = distance
-              }
-              let suggestion = { term: word.term, distance, count: word.count, }
-              if verbosity == Top && !suggestions.is_empty() {
-                if compare_suggestions(suggestion, suggestions[0]) < 0 {
-                  suggestions[0] = suggestion
-                }
+    let search = LookupSearch::{
+      query,
+      signature: character_signature(query),
+      lookup_id,
+      verbosity,
+      cutoff: limit,
+      suggestions,
+      workspace: OsaWorkspace::new(),
+    }
+    if limit <= 2 {
+      let prefix_length = Int32::min(query.length(), self.prefix_length)
+      // Enumerate deletion positions directly. Hashes can collide: scan every
+      // matching entry and verify full words, so collisions only add candidates.
+      // Repeated characters may revisit a bucket but never rescore a word.
+      for depth = 0; depth <= search.cutoff; depth = depth + 1 {
+        for first = 0
+            first < (if depth == 0 { 1 } else { prefix_length })
+            first = first + 1 {
+          for second = (if depth == 2 { first + 1 } else { 0 })
+              second < (if depth == 2 { prefix_length } else { 1 })
+              second = second + 1 {
+            let hash = deletion_hash(
+              query,
+              prefix_length,
+              if depth > 0 {
+                first
               } else {
-                suggestions.push(suggestion)
-              }
-            }
+                -1
+              },
+              if depth == 2 {
+                second
+              } else {
+                -1
+              },
+            )
+            self.deletes.each_hash(hash, bucket => {
+              search.consider(bucket, self.prefix_length)
+            })
           }
         }
       }
-      // Every edit <= cutoff has an intersection at a query deletion depth
-      // <= cutoff. Avoid constructing deeper layers after a closer match.
-      if depth >= cutoff {
-        break
-      }
-      append_deletion_layer(variants, seen, start, end)
-      start = end
-      if start == variants.length() {
-        break
+    } else {
+      let prefix = String::from_array(
+        query[:Int32::min(query.length(), self.prefix_length)],
+      )
+      let variants = [prefix]
+      let seen : StringTable[Bool] = StringTable::new()
+      seen[prefix] = true
+      let mut start = 0
+      for depth = 0; depth <= search.cutoff; depth = depth + 1 {
+        let end = variants.length()
+        for i = start; i < end; i = i + 1 {
+          if self.deletes.get(variants[i]) is Some(bucket) {
+            search.consider(bucket, self.prefix_length)
+          }
+        }
+        // Every edit <= search.cutoff has an intersection at a query deletion depth
+        // <= search.cutoff. Avoid constructing deeper layers after a closer match.
+        if depth >= search.cutoff {
+          break
+        }
+        append_deletion_layer(variants, seen, start, end)
+        start = end
+        if start == variants.length() {
+          break
+        }
       }
     }
   }
@@ -366,6 +427,7 @@ pub fn SymSpell::lookup(
 }
 
 ///|
+#inline
 fn SymSpell::resolve_edit_distance(
   self : SymSpell,
   requested : Int32?,
@@ -400,18 +462,69 @@ fn add_frequency(left : Int64, right : Int64) -> Int64 {
 }
 
 ///|
-/// Generate unique deletion variants of a Unicode prefix in breadth-first
-/// order. Include the unchanged prefix so insertions and deletions can meet.
+/// Generate deletion variants of a Unicode prefix, including the unchanged
+/// prefix. Index insertion can deduplicate against each bucket's final word
+/// instead of allocating a separate set for every dictionary entry.
 fn deletion_variants(
   chars : Array[Char],
   prefix_length : Int32,
   max_distance : Int32,
+  deduplicate~ : Bool = true,
+  source? : String,
 ) -> Array[String] {
-  let prefix = String::from_array(
-    chars[:Int32::min(chars.length(), prefix_length)],
-  )
+  let length = Int32::min(chars.length(), prefix_length)
+  let prefix = match source {
+    Some(text) => {
+      let mut end = 0
+      for i = 0; i < length; i = i + 1 {
+        end = end + (if chars[i].to_int() > 0xFFFF { 2 } else { 1 })
+      }
+      text.unsafe_substring(start=0, end~)
+    }
+    None => String::from_array(chars[:length])
+  }
   let variants = [prefix]
-  let seen = @set.Set([prefix])
+  if max_distance <= 2 {
+    let length = Int32::min(chars.length(), prefix_length)
+    let offsets = [0]
+    for i = 0; i < length; i = i + 1 {
+      offsets.push(
+        offsets[i] + (if chars[i].to_int() > 0xFFFF { 2 } else { 1 }),
+      )
+    }
+    if max_distance > 0 {
+      for i = 0; i < length; i = i + 1 {
+        if i > 0 && chars[i] == chars[i - 1] {
+          continue
+        }
+        let candidate = prefix.unsafe_substring(start=0, end=offsets[i]) +
+          prefix.unsafe_substring(start=offsets[i + 1], end=prefix.length())
+        variants.push(candidate)
+        if max_distance == 2 {
+          let width = offsets[i + 1] - offsets[i]
+          for j = i + 1; j < length; j = j + 1 {
+            if j > i + 1 && chars[j] == chars[j - 1] {
+              continue
+            }
+            let deleted = candidate.unsafe_substring(
+                start=0,
+                end=offsets[j] - width,
+              ) +
+              candidate.unsafe_substring(
+                start=offsets[j + 1] - width,
+                end=candidate.length(),
+              )
+            if !deduplicate || !variants.contains(deleted) {
+              variants.push(deleted)
+            }
+          }
+        }
+      }
+    }
+    return variants
+  }
+  let seen : StringTable[Bool] = StringTable::new()
+  seen[prefix] = true
   let mut start = 0
   for _depth = 0; _depth < max_distance; _depth = _depth + 1 {
     let end = variants.length()
@@ -431,7 +544,7 @@ fn deletion_variants(
 /// for every deletion. Consecutive equal characters yield the same deletion.
 fn append_deletion_layer(
   variants : Array[String],
-  seen : @set.Set[String],
+  seen : StringTable[Bool],
   start : Int32,
   end : Int32,
 ) -> Unit {
@@ -442,16 +555,117 @@ fn append_deletion_layer(
     for character in candidate {
       let next = offset + (if character.to_int() > 0xFFFF { 2 } else { 1 })
       if previous != Some(character) {
-        let builder = StringBuilder(size_hint=candidate.length())
-        builder.write_view(candidate[:offset])
-        builder.write_view(candidate[next:])
-        let deleted = builder.to_string()
-        if seen.add_and_check(deleted) {
+        let deleted = candidate.unsafe_substring(start=0, end=offset) +
+          candidate.unsafe_substring(start=next, end=candidate.length())
+        if seen.insert(deleted, true) {
           variants.push(deleted)
         }
       }
       previous = Some(character)
       offset = next
+    }
+  }
+}
+
+///|
+/// Match the table hash without allocating a deletion string. Prefix positions
+/// are Unicode code points; supplementary characters contribute both UTF-16
+/// units to exactly the same hash as their stored string.
+fn deletion_hash(
+  chars : Array[Char],
+  length : Int32,
+  first : Int32,
+  second : Int32,
+) -> Int32 {
+  let mut hash = 0U
+  for i = 0; i < length; i = i + 1 {
+    if i == first || i == second {
+      continue
+    }
+    let code = chars[i].to_int()
+    if code > 0xFFFF {
+      hash = hash * 31U +
+        ((code - 0x10000) >> 10).reinterpret_as_uint() +
+        0xD800U
+      hash = hash * 31U +
+        ((code - 0x10000) & 1023).reinterpret_as_uint() +
+        0xDC00U
+    } else {
+      hash = hash * 31U + code.reinterpret_as_uint()
+    }
+  }
+  hash = (hash ^ (hash >> 16)) * 0x85ebca6bU
+  let result = (hash ^ (hash >> 13)).reinterpret_as_int()
+  if result == 0 {
+    1
+  } else {
+    result
+  }
+}
+
+///|
+/// Candidate markers and distance buffers belong to this synchronous search.
+/// No user code runs while its dictionary epoch is active.
+priv struct LookupSearch {
+  query : Array[Char]
+  signature : UInt32
+  lookup_id : Int32
+  verbosity : Verbosity
+  mut cutoff : Int32
+  suggestions : Array[Suggestion]
+  workspace : OsaWorkspace
+}
+
+///|
+fn LookupSearch::consider(
+  self : LookupSearch,
+  bucket : Array[Word],
+  prefix_length : Int32,
+) -> Unit {
+  for word in bucket {
+    if word.seen == self.lookup_id {
+      continue
+    }
+    word.seen = self.lookup_id
+    if (self.query.length() - word.chars.length()).abs() > self.cutoff {
+      continue
+    }
+    // The deletion index constrains prefixes; screen suffix character sets
+    // before scoring. The screen is a lower bound even for Unicode collisions.
+    if (
+        self.query.length() > prefix_length ||
+        word.chars.length() > prefix_length
+      ) &&
+      (
+        (self.signature & word.signature.lnot()).popcnt() > self.cutoff ||
+        (word.signature & self.signature.lnot()).popcnt() > self.cutoff
+      ) {
+      continue
+    }
+    if osa_distance_with_workspace(
+        self.query,
+        word.chars,
+        self.cutoff,
+        self.workspace,
+      )
+      is Some(distance) {
+      if self.verbosity != All && distance < self.cutoff {
+        self.suggestions.clear()
+        self.cutoff = distance
+      }
+      if self.verbosity == Top && !self.suggestions.is_empty() {
+        let best = self.suggestions[0]
+        if word.count > best.count ||
+          (word.count == best.count && word.term.lexical_compare(best.term) < 0) {
+          self.suggestions[0] = {
+            term: word.term,
+            distance,
+            count: word.count,
+          }
+        }
+      } else {
+        self.suggestions.push({ term: word.term, distance, count: word.count, })
+      }
     }
   }
 }

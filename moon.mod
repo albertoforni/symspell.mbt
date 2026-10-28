@@ -12,4 +12,4 @@ keywords = [ "symspell", "spelling", "fuzzy-search", "unicode", "segmentation" ]
 
 preferred_target = "wasm-gc"
 
-description = "Pure MoonBit SymSpell spelling correction, compound splitting and merging, and Unicode word segmentation."
+description = "SymSpell spelling correction, compound splitting and merging, and Unicode word segmentation in MoonBit."

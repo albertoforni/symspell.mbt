@@ -3,6 +3,12 @@ import {
   "moonbitlang/core/debug",
   "moonbitlang/core/encoding/utf8",
   "moonbitlang/core/math",
-  "moonbitlang/core/set",
   "moonbitlang/core/string",
 }
+
+options(
+  targets: {
+    "string_table.mbt": [ "native", "wasm", "wasm-gc" ],
+    "string_table_js.mbt": [ "js" ],
+  },
+)

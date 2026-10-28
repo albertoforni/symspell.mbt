@@ -22,23 +22,33 @@ pub fn SymSpell::create_dictionary(
   self : SymSpell,
   text : String,
 ) -> CorpusReport {
-  let builder = StringBuilder()
+  let mut start = -1
+  let mut offset = 0
   let mut parsed_tokens = 0
   let mut added_words = 0
   for character in text {
     if is_corpus_alphanumeric(character) || character is ('\'' | '’') {
-      builder.write_char(character)
-    } else if !builder.is_empty() {
+      if start < 0 {
+        start = offset
+      }
+    } else if start >= 0 {
       parsed_tokens = parsed_tokens + 1
-      if self.create_dictionary_entry(builder.to_string(), 1L) {
+      if self.create_dictionary_entry(
+          text.unsafe_substring(start~, end=offset),
+          1L,
+        ) {
         added_words = added_words + 1
       }
-      builder.reset()
+      start = -1
     }
+    offset = offset + (if character.to_int() > 0xFFFF { 2 } else { 1 })
   }
-  if !builder.is_empty() {
+  if start >= 0 {
     parsed_tokens = parsed_tokens + 1
-    if self.create_dictionary_entry(builder.to_string(), 1L) {
+    if self.create_dictionary_entry(
+        text.unsafe_substring(start~, end=offset),
+        1L,
+      ) {
       added_words = added_words + 1
     }
   }
